@@ -41,7 +41,8 @@ def test_non_side_effect_executes_inline():
         )
 
     out = asyncio.run(go())
-    assert len(out.executed) == 1 and out.executed[0].ok
+    assert len(out.executed) == 1 and out.executed[0].result.ok
+    assert out.executed[0].action.tool == "list_messages"
     assert not out.queued and not out.rejected
 
 
@@ -118,7 +119,7 @@ def test_autonomous_executes_directly():
         )
 
     out = asyncio.run(go())
-    assert len(out.executed) == 1 and out.executed[0].ok
+    assert len(out.executed) == 1 and out.executed[0].result.ok
     assert not out.queued and not out.rejected
 
 

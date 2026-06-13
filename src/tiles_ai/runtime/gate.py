@@ -48,10 +48,18 @@ class ApprovalItem:
 
 
 @dataclass
+class ExecutedAction:
+    """A proposed action that the gate executed, paired with its result."""
+
+    action: ProposedAction
+    result: ToolResult
+
+
+@dataclass
 class GateOutcome:
     """What the gate did with a single run's worth of proposed actions."""
 
-    executed: list[ToolResult] = field(default_factory=list)
+    executed: list[ExecutedAction] = field(default_factory=list)
     queued: list[ApprovalItem] = field(default_factory=list)
     rejected: list[ProposedAction] = field(default_factory=list)
 
@@ -88,7 +96,7 @@ class PermissionGate:
                 result = await self._execute(
                     tile_id, action, connector, connector_manifest
                 )
-                outcome.executed.append(result)
+                outcome.executed.append(ExecutedAction(action, result))
             elif decision is PermissionDecision.QUEUE:
                 item = ApprovalItem(self._next_id(), tile_id, action)
                 self._items[item.id] = item

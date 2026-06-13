@@ -30,6 +30,7 @@ from ..contracts import (
     TileState,
     transition,
 )
+from ..events import Event, EventBus
 from ..model import ModelAdapter
 from ..registry import Registry
 from .gate import GateOutcome, PermissionGate
@@ -71,11 +72,17 @@ class Runtime:
         model: ModelAdapter,
         *,
         gate: PermissionGate | None = None,
+        events: EventBus | None = None,
     ) -> None:
         self.registry = registry
         self.model = model
         self.gate = gate or PermissionGate()
+        self.events = events
         self._active: dict[str, ActiveTile] = {}
+
+    def _emit(self, type: str, tile_id: str | None = None, **data: Any) -> None:
+        if self.events is not None:
+            self.events.publish(Event(type=type, tile_id=tile_id, data=data))
 
     # --- introspection -----------------------------------------------------
 
@@ -155,6 +162,12 @@ class Runtime:
             context=context,
         )
         self._active[tile_id] = active
+        self._emit(
+            "tile.activated",
+            tile_id,
+            brain=resolved.badge_label,
+            tier=manifest.permission_tier.value,
+        )
         return active
 
     async def run(self, tile_id: str, input: Any = None) -> RunOutcome:
@@ -171,6 +184,26 @@ class Runtime:
             connector=active.connector,
             connector_manifest=active.connector_manifest,
         )
+
+        for ex in gate_outcome.executed:
+            self._emit("action.executed", tile_id, tool=ex.action.tool, ok=ex.result.ok)
+        for item in gate_outcome.queued:
+            self._emit(
+                "action.queued",
+                tile_id,
+                approval_id=item.id,
+                tool=item.action.tool,
+                summary=item.action.summary,
+            )
+        for action in gate_outcome.rejected:
+            self._emit("action.rejected", tile_id, tool=action.tool)
+        self._emit(
+            "tile.run",
+            tile_id,
+            executed=len(gate_outcome.executed),
+            queued=len(gate_outcome.queued),
+            rejected=len(gate_outcome.rejected),
+        )
         return RunOutcome(tile_id=tile_id, result=plan.result, gate=gate_outcome)
 
     async def deactivate(self, tile_id: str) -> None:
@@ -181,6 +214,7 @@ class Runtime:
         await active.handler.on_deactivate()
         if active.connector is not None:
             await active.connector.disconnect()
+        self._emit("tile.deactivated", tile_id)
         # The tile is dropped from the active set; the registry keeps it as
         # `available` (loaded, idle), so it can be reactivated. `stopped` is the
         # transient teardown state, not a resting one we track per board.
@@ -198,9 +232,18 @@ class Runtime:
         active = self._active.get(item.tile_id)
         connector = active.connector if active else None
         connector_manifest = active.connector_manifest if active else None
-        return await self.gate.resolve(
+        resolved = await self.gate.resolve(
             approval_id,
             approved,
             connector=connector,
             connector_manifest=connector_manifest,
         )
+        self._emit(
+            "approval.resolved",
+            item.tile_id,
+            approval_id=approval_id,
+            approved=approved,
+            status=resolved.status.value,
+            tool=resolved.action.tool,
+        )
+        return resolved

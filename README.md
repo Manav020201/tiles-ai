@@ -6,11 +6,23 @@ control plane around your agents: **register → activate → observe → permis
 (later) compose.** It is *not* another framework for writing agent logic — a
 tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 
-> **Status: v0, phases 1–3 done.** The contract (schemas, interfaces, lifecycle,
-> permission tiers, brain resolution), the registry/loader, and the runtime
-> stack (mock connector layer, model adapter, permission gate + approval queue)
-> are in, with a working `read_only` reference tile and 67 tests. The FastAPI
-> layer and React board come next. See [`SPEC.md`](SPEC.md).
+> **Status: v0, phases 1–4 done.** The contract, registry/loader, runtime stack
+> (mock connector, model adapter, permission gate + approval queue), and the
+> FastAPI control-plane API with an SSE event stream are in — plus `read_only`
+> and `draft` reference tiles on a shared connector, and 84 tests. The React
+> board is next. See [`SPEC.md`](SPEC.md).
+
+## Run the API
+
+```bash
+pip install -e ".[dev]"
+python -m tiles_ai.api            # serves http://127.0.0.1:8000
+```
+
+Endpoints: `GET /api/tiles`, `POST /api/tiles/{id}/{activate,deactivate,run}`,
+`GET /api/approvals`, `POST /api/approvals/{id}/resolve`, `GET/POST /api/providers`,
+`POST /api/providers/{id}/test`, `PUT /api/brain/default`, and `GET /api/events`
+(SSE). The brain store loads from `brain.local.yaml` (gitignored).
 
 ## Why it exists
 

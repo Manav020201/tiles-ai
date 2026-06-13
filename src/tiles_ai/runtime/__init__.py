@@ -10,6 +10,7 @@ from __future__ import annotations
 from .gate import (
     ApprovalItem,
     ApprovalStatus,
+    ExecutedAction,
     GateOutcome,
     PermissionGate,
 )
@@ -23,6 +24,7 @@ __all__ = [
     "RunOutcome",
     "PermissionGate",
     "GateOutcome",
+    "ExecutedAction",
     "ApprovalItem",
     "ApprovalStatus",
     "ToolProxy",

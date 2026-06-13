@@ -1,0 +1,24 @@
+# Reply Drafter — a draft-tier reference tile.
+#
+# Reads the inbox and drafts a reply, then PROPOSES sending it. Because its tier
+# is `draft`, the send never fires on its own — it queues for human approval.
+# This is the same Gmail connector the read_only Inbox Summary tile binds to:
+# one connector, many tiles.
+id: reply-drafter
+name: Reply Drafter
+description: Draft a reply to an email and queue it for approval.
+icon: "✉️"
+
+connector: gmail
+# Grants the read tool AND the side-effectful send tool. The allow-list lets the
+# tile *propose* a send; the permission gate decides whether it fires.
+allowed_tools: [list_messages, send_message]
+permission_tier: draft
+
+instructions: >
+  You draft concise, friendly email replies. Given a message, write a short
+  reply body (2-3 sentences). Return only the reply text.
+
+provides:
+  - name: email.draft_reply
+    description: A proposed reply, pending human approval.
