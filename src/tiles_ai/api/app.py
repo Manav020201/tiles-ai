@@ -33,6 +33,7 @@ from .schemas import (
     ApprovalView,
     BrainView,
     ExecutedView,
+    PinBrainRequest,
     ProviderView,
     QueuedView,
     RejectedView,
@@ -84,8 +85,11 @@ def create_app(
         m = loaded.manifest
         brain: BrainView | None = None
         needs_brain = False
+        uses_default = m.uses_default_brain()
         try:
-            brain = _brain_view(adapter.resolve(m.model))
+            resolved = runtime.resolve_brain_for(m.id)
+            brain = _brain_view(resolved)
+            uses_default = resolved.source == "default"
         except BrainResolutionError:
             needs_brain = True
         return TileSummary(
@@ -97,7 +101,7 @@ def create_app(
             permission_tier=m.permission_tier.value,
             state=runtime.state(m.id).value,
             allowed_tools=m.allowed_tools,
-            uses_default_brain=m.uses_default_brain(),
+            uses_default_brain=uses_default,
             brain=brain,
             needs_brain=needs_brain,
         )
@@ -151,6 +155,15 @@ def create_app(
     @app.post("/api/tiles/{tile_id}/deactivate", response_model=TileSummary)
     async def deactivate(tile_id: str) -> TileSummary:
         await runtime.deactivate(tile_id)
+        return _tile_summary(tile_id)
+
+    @app.put("/api/tiles/{tile_id}/brain", response_model=TileSummary)
+    def pin_brain(tile_id: str, body: PinBrainRequest) -> TileSummary:
+        if registry.get_tile(tile_id) is None:
+            raise HTTPException(404, f"no tile '{tile_id}'")
+        if body.provider_id is not None and store.config.get(body.provider_id) is None:
+            raise HTTPException(404, f"no provider '{body.provider_id}'")
+        runtime.set_brain_override(tile_id, body.provider_id)
         return _tile_summary(tile_id)
 
     @app.post("/api/tiles/{tile_id}/run", response_model=RunResponse)

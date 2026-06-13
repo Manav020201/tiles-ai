@@ -238,7 +238,7 @@ for tests/demos. A new hosted provider is added by registering a builder
 3. ~~Connector layer (mock) + runtime + permission gate + model_adapter +
    one `read_only` reference tile.~~ ✅ done
 4. ~~FastAPI endpoints + event stream + a `draft` reference tile + approval queue.~~ ✅ done
-5. React board UI (onboarding, activation, badges, activity feed, approvals,
-   brain override). **← next**
-6. Docs + license.
+5. ~~React board UI (onboarding, activation, badges, activity feed, approvals,
+   brain override).~~ ✅ done
+6. Docs + license. **← next**
 ```

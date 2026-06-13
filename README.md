@@ -6,23 +6,32 @@ control plane around your agents: **register → activate → observe → permis
 (later) compose.** It is *not* another framework for writing agent logic — a
 tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 
-> **Status: v0, phases 1–4 done.** The contract, registry/loader, runtime stack
-> (mock connector, model adapter, permission gate + approval queue), and the
-> FastAPI control-plane API with an SSE event stream are in — plus `read_only`
-> and `draft` reference tiles on a shared connector, and 84 tests. The React
-> board is next. See [`SPEC.md`](SPEC.md).
+> **Status: v0, phases 1–5 done.** The contract, registry/loader, runtime stack
+> (mock connector, model adapter, permission gate + approval queue), the FastAPI
+> control-plane API with an SSE event stream, and the React board (onboarding,
+> activation, badges, approvals, live feed, brain override) are all in — plus
+> `read_only` and `draft` reference tiles on a shared connector, and 85 backend
+> tests. Docs + license are the last step. See [`SPEC.md`](SPEC.md).
 
-## Run the API
+## Run it
 
 ```bash
 pip install -e ".[dev]"
-python -m tiles_ai.api            # serves http://127.0.0.1:8000
+
+# zero-setup demo: an offline echo brain, no keys, no network
+TILES_ECHO=1 python -m tiles_ai.api        # API on http://127.0.0.1:8000
+
+# the board (in another shell)
+cd frontend && npm install && npm run dev  # http://localhost:5173
 ```
 
-Endpoints: `GET /api/tiles`, `POST /api/tiles/{id}/{activate,deactivate,run}`,
-`GET /api/approvals`, `POST /api/approvals/{id}/resolve`, `GET/POST /api/providers`,
-`POST /api/providers/{id}/test`, `PUT /api/brain/default`, and `GET /api/events`
-(SSE). The brain store loads from `brain.local.yaml` (gitignored).
+Drop `TILES_ECHO=1` to use a real brain; the store loads from `brain.local.yaml`
+(gitignored) and the board's onboarding writes it.
+
+API endpoints: `GET /api/tiles`, `POST /api/tiles/{id}/{activate,deactivate,run}`,
+`PUT /api/tiles/{id}/brain`, `GET /api/approvals`, `POST /api/approvals/{id}/resolve`,
+`GET/POST /api/providers`, `POST /api/providers/{id}/test`, `PUT /api/brain/default`,
+and `GET /api/events` (SSE). See [`frontend/`](frontend/) for the board.
 
 ## Why it exists
 

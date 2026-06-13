@@ -79,6 +79,10 @@ class Runtime:
         self.gate = gate or PermissionGate()
         self.events = events
         self._active: dict[str, ActiveTile] = {}
+        # Per-tile brain overrides set from the UI (tile_id -> provider id). These
+        # are session state, not manifest data, so they live here rather than on
+        # disk; they win over a tile's pinned/default brain on next activation.
+        self._brain_overrides: dict[str, str] = {}
 
     def _emit(self, type: str, tile_id: str | None = None, **data: Any) -> None:
         if self.events is not None:
@@ -96,6 +100,42 @@ class Runtime:
     def is_active(self, tile_id: str) -> bool:
         return tile_id in self._active
 
+    def resolve_brain_for(self, tile_id: str) -> ResolvedBrain:
+        """Resolve a tile's brain, honoring a runtime override over the manifest.
+
+        Order: UI override -> the tile's pinned `model` -> the global default.
+        Raises BrainResolutionError if nothing resolves (no override, no pin, no
+        default configured) — the case onboarding prevents.
+        """
+        loaded = self.registry.get_tile(tile_id)
+        if loaded is None:
+            raise RuntimeError_(f"no available tile '{tile_id}'")
+
+        override_id = self._brain_overrides.get(tile_id)
+        if override_id:
+            provider = self.model.config.get(override_id)
+            if provider is not None:
+                return ResolvedBrain(
+                    source="pinned",
+                    provider=provider.provider_family(),
+                    model=provider.model,
+                    endpoint=getattr(provider, "endpoint", None),
+                    provider_id=provider.id,
+                )
+            # Override points at a provider that no longer exists; drop it and
+            # fall back to the manifest rather than failing.
+            self._brain_overrides.pop(tile_id, None)
+        return self.model.resolve(loaded.manifest.model)
+
+    def set_brain_override(self, tile_id: str, provider_id: str | None) -> None:
+        """Pin a tile to a configured provider (or clear the pin with None)."""
+        if provider_id is None:
+            self._brain_overrides.pop(tile_id, None)
+            return
+        if self.model.config.get(provider_id) is None:
+            raise RuntimeError_(f"no provider '{provider_id}' to pin")
+        self._brain_overrides[tile_id] = provider_id
+
     # --- lifecycle ---------------------------------------------------------
 
     async def activate(self, tile_id: str) -> ActiveTile:
@@ -109,8 +149,9 @@ class Runtime:
 
         manifest = loaded.manifest
         # Resolve the brain first — a tile with no default configured fails here,
-        # which is exactly the case onboarding exists to prevent.
-        resolved = self.model.resolve(manifest.model)
+        # which is exactly the case onboarding exists to prevent. A runtime
+        # override (set from the tile's settings panel) wins over the manifest.
+        resolved = self.resolve_brain_for(tile_id)
 
         connector: Connector | None = None
         connector_manifest: ConnectorManifest | None = None

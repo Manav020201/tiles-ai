@@ -11,15 +11,31 @@ import os
 
 import uvicorn
 
-from ..model import BrainStore
+from ..contracts import HostedProvider
+from ..model import BrainStore, ModelAdapter, echo_client_factory
 from .app import create_app
 
 
 def main() -> None:
     root = os.environ.get("TILES_ROOT", ".")
-    brain_path = os.environ.get("TILES_BRAIN", "brain.local.yaml")
-    store = BrainStore.load(brain_path)
-    app = create_app(root=root, brain_store=store)
+
+    if os.environ.get("TILES_ECHO"):
+        # Zero-setup demo: an offline echo brain so the whole board works without
+        # keys or a network. Great for a first look and for contributors.
+        store = BrainStore()
+        store.add_provider(
+            HostedProvider(
+                id="demo", provider="anthropic", api_key="demo", model="claude-opus-4-8"
+            ),
+            make_default=True,
+        )
+        adapter = ModelAdapter(store, client_factory=echo_client_factory)
+        app = create_app(root=root, brain_store=store, model_adapter=adapter)
+    else:
+        brain_path = os.environ.get("TILES_BRAIN", "brain.local.yaml")
+        store = BrainStore.load(brain_path)
+        app = create_app(root=root, brain_store=store)
+
     uvicorn.run(
         app,
         host=os.environ.get("TILES_HOST", "127.0.0.1"),

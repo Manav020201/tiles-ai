@@ -127,6 +127,41 @@ def test_provider_management_and_test_action():
     assert test["ok"] is True
 
 
+def test_pin_brain_override():
+    client, _ = _client()  # default = cloud (anthropic)
+    # Add a local provider to pin to.
+    client.post(
+        "/api/providers",
+        json={
+            "provider": {
+                "id": "local",
+                "kind": "local",
+                "endpoint": "http://localhost:11434",
+                "model": "llama3",
+            }
+        },
+    )
+    # Before pin: inbox-summary uses the default brain.
+    before = client.get("/api/tiles/inbox-summary").json()
+    assert before["uses_default_brain"] is True
+    assert before["brain"]["model"] == "claude-opus-4-8"
+
+    # Pin it to the local provider.
+    pinned = client.put(
+        "/api/tiles/inbox-summary/brain", json={"provider_id": "local"}
+    ).json()
+    assert pinned["uses_default_brain"] is False
+    assert pinned["brain"]["source"] == "pinned"
+    assert pinned["brain"]["model"] == "llama3"
+
+    # Clear the pin -> back to default.
+    cleared = client.put(
+        "/api/tiles/inbox-summary/brain", json={"provider_id": None}
+    ).json()
+    assert cleared["uses_default_brain"] is True
+    assert cleared["brain"]["model"] == "claude-opus-4-8"
+
+
 def test_events_endpoint_receives_activation_event():
     # Subscribe to the app's bus directly, then trigger an action over HTTP and
     # confirm the event was published (covers runtime->bus emission end to end

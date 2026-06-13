@@ -105,6 +105,10 @@ class SetDefaultRequest(BaseModel):
     provider_id: str
 
 
+class PinBrainRequest(BaseModel):
+    provider_id: str | None = None  # None clears the pin (back to default/manifest)
+
+
 class TestResponse(BaseModel):
     ok: bool
     detail: str = ""

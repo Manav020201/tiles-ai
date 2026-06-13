@@ -20,6 +20,7 @@ brain.local.*
 # Node / frontend (phase 5)
 node_modules/
 frontend/dist/
+*.tsbuildinfo
 
 # OS
 .DS_Store
