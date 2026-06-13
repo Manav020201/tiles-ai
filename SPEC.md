@@ -240,5 +240,6 @@ for tests/demos. A new hosted provider is added by registering a builder
 4. ~~FastAPI endpoints + event stream + a `draft` reference tile + approval queue.~~ ✅ done
 5. ~~React board UI (onboarding, activation, badges, activity feed, approvals,
    brain override).~~ ✅ done
-6. Docs + license. **← next**
+6. ~~Docs + license (top-level README, docs/AUTHORING.md, CONTRIBUTING.md, MIT
+   LICENSE).~~ ✅ done — **v0 complete.**
 ```

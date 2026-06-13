@@ -6,12 +6,18 @@ control plane around your agents: **register → activate → observe → permis
 (later) compose.** It is *not* another framework for writing agent logic — a
 tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 
-> **Status: v0, phases 1–5 done.** The contract, registry/loader, runtime stack
-> (mock connector, model adapter, permission gate + approval queue), the FastAPI
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+> **Status: v0 complete.** The contract, registry/loader, runtime stack (mock
+> connector, model adapter, permission gate + approval queue), the FastAPI
 > control-plane API with an SSE event stream, and the React board (onboarding,
 > activation, badges, approvals, live feed, brain override) are all in — plus
 > `read_only` and `draft` reference tiles on a shared connector, and 85 backend
-> tests. Docs + license are the last step. See [`SPEC.md`](SPEC.md).
+> tests. See [`SPEC.md`](SPEC.md) for the full spec.
+
+**Docs:** [SPEC.md](SPEC.md) (the contract) · [docs/AUTHORING.md](docs/AUTHORING.md)
+(write a tile or connector) · [CONTRIBUTING.md](CONTRIBUTING.md) ·
+[frontend/](frontend/) (the board)
 
 ## Run it
 
@@ -57,6 +63,52 @@ A connector is, in the general case, a binding to an app's **MCP** server. v0
 ships a `mock` connector; a real MCP-backed one drops in without changing the
 tile contract.
 
+## Architecture
+
+```
+   React board  ──HTTP/SSE──▶  FastAPI control plane
+                                     │
+                                     ▼
+   registry ──▶ runtime ──▶ permission gate ──▶ connector ──▶ app (mock | MCP)
+                  │                                 ▲
+                  ▼                                 │
+            model adapter ──▶ brain (Anthropic / OpenAI / Ollama / echo)
+```
+
+- **registry** discovers and validates `connectors/` and `tiles/`, rejecting any
+  tile that binds a missing connector or tool.
+- **runtime** activates tiles, assembles their context, and routes tool calls.
+- **permission gate** is the single path a side effect can take — read_only
+  rejects, draft queues for approval, autonomous executes.
+- **model adapter** resolves each tile's brain (its pin, else the global default)
+  and runs completions.
+
+## Authoring a tile
+
+Copy a folder, implement one method:
+
+```python
+from tiles_ai.contracts import ActionPlan, Tile
+
+class MyTile(Tile):
+    async def run(self, input, context) -> ActionPlan:
+        data = await context.tools.call("list_messages")     # allow-listed read
+        answer = await context.model.complete(f"Summarize: {data.output}")
+        return ActionPlan(result=answer)                     # propose side effects, don't do them
+```
+
+Full walkthrough — including adding a connector — in
+[docs/AUTHORING.md](docs/AUTHORING.md). The two reference tiles
+([inbox-summary](tiles/inbox-summary), [reply-drafter](tiles/reply-drafter)) are
+meant to be read end to end and copied.
+
+## Out of scope for v0 (seams left, not built)
+
+Multi-tile orchestration (the `provides`/`consumes` seam is declared) · scheduled
+/ event triggers (activation is manual) · multi-user / hosting / marketplace ·
+real OAuth (the `auth` hook is declared) · live MCP servers (the `Connector`
+interface is the abstraction; a mock ships today).
+
 ## Develop
 
 ```bash
@@ -68,8 +120,9 @@ pytest
 The whole contract is in [`src/tiles_ai/contracts/`](src/tiles_ai/contracts/).
 Start with [`SPEC.md`](SPEC.md), then read the modules in this order:
 `lifecycle` → `permissions` → `connector_manifest` → `tile_manifest` →
-`provider_config` → `connector` → `tile` → `validation`.
+`provider_config` → `connector` → `tile` → `validation`. See
+[CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 
 ## License
 
-To be decided in phase 6 (MIT vs Apache-2.0).
+[MIT](LICENSE).
