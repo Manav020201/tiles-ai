@@ -75,6 +75,50 @@ def test_default_factory_builds_real_clients_without_network():
     assert isinstance(local, OllamaClient)
 
 
+def test_default_factory_dispatches_openai():
+    from tiles_ai.model import OpenAIClient
+
+    store = BrainStore()
+    store.add_provider(
+        HostedProvider(id="oai", provider="openai", api_key="sk-x", model="gpt-4o"),
+        make_default=True,
+    )
+    adapter = ModelAdapter(store)  # real factory
+    client = adapter.client_for(adapter.resolve(None))
+    assert isinstance(client, OpenAIClient)
+
+
+def test_unknown_hosted_provider_errors_with_wired_list():
+    from tiles_ai.model import ModelClientError
+
+    store = BrainStore()
+    store.add_provider(
+        HostedProvider(id="mi", provider="mistral", api_key="k", model="m"),
+        make_default=True,
+    )
+    adapter = ModelAdapter(store)
+    try:
+        adapter.client_for(adapter.resolve(None))
+    except ModelClientError as exc:
+        assert "anthropic" in str(exc) and "openai" in str(exc)
+    else:
+        raise AssertionError("expected ModelClientError for unknown provider")
+
+
+def test_register_hosted_client_extends_dispatch():
+    from tiles_ai.model import EchoModelClient, register_hosted_client
+
+    register_hosted_client("cohere", lambda key, model: EchoModelClient(model=model))
+    store = BrainStore()
+    store.add_provider(
+        HostedProvider(id="co", provider="cohere", api_key="k", model="command-r"),
+        make_default=True,
+    )
+    adapter = ModelAdapter(store)
+    client = adapter.client_for(adapter.resolve(None))
+    assert isinstance(client, EchoModelClient)
+
+
 def test_save_load_roundtrip(tmp_path):
     path = tmp_path / "brain.local.yaml"
     _store().save(path)

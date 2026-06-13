@@ -182,6 +182,12 @@ side effects itself** — it *proposes* them, and the permission gate decides pe
 the tile's tier. This is what makes "green = running, not unsupervised" a
 structural guarantee rather than a convention.
 
+The guarantee is enforced by what the handler *can reach*. The `RunContext`
+gives a handler exactly two ways to touch the world — read via `ctx.tools`
+(allow-listed, non-side-effectful only) and propose via the `ActionPlan`. It
+deliberately exposes **no raw connector**, so the permission gate is the single
+path through which any side effect can execute.
+
 ## The brain layer (model provider config)
 
 **Connect the brain once.** A user configures an LLM provider once; every tile
@@ -206,6 +212,12 @@ to prevent.
 `pinned`. Each provider also gets a **Test** action (phase 3) — a trivial
 completion returning ok/error — so the user gets a green check before relying on
 it.
+
+The `ModelAdapter` dispatches a resolved brain to a `ModelClient`. v0 wires
+**Anthropic** and **OpenAI** (hosted) and **Ollama** (local), all over a
+zero-dependency stdlib HTTP transport; `EchoModelClient` runs everything offline
+for tests/demos. A new hosted provider is added by registering a builder
+(`register_hosted_client`) — no edits to the dispatch logic.
 
 ## What v0 builds the seam for, but does not implement
 

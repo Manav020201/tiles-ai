@@ -4,11 +4,12 @@ Every client implements one method: `complete(prompt, system) -> str`. This is
 all a tile needs; richer surfaces (streaming, tools) can grow later behind the
 same boundary.
 
-v0 ships three:
+v0 ships four:
   * EchoModelClient   — offline, deterministic. The default for tests and for
                         proving the wiring before any key is configured.
   * OllamaClient      — local models (the "no data leaves my machine" showcase).
   * AnthropicClient   — hosted, via the Messages API.
+  * OpenAIClient      — hosted, via the Chat Completions API.
 
 Real HTTP goes through one stdlib helper (`_post_json`) run off the event loop,
 so there is no third-party HTTP dependency. Network clients are only constructed
@@ -92,6 +93,40 @@ class AnthropicClient:
         )
         blocks = data.get("content", [])
         return "".join(b.get("text", "") for b in blocks if b.get("type") == "text").strip()
+
+
+class OpenAIClient:
+    """Hosted models via the OpenAI Chat Completions API.
+
+    `base_url` is overridable so any OpenAI-compatible endpoint (Azure OpenAI,
+    Together, a local server, ...) works through the same client.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        *,
+        base_url: str = "https://api.openai.com/v1",
+    ) -> None:
+        self.api_key = api_key
+        self.model = model
+        self.base_url = base_url.rstrip("/")
+
+    async def complete(self, prompt: str, *, system: str | None = None) -> str:
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+        data = await _post_json(
+            f"{self.base_url}/chat/completions",
+            {"model": self.model, "messages": messages},
+            headers={"authorization": f"Bearer {self.api_key}"},
+        )
+        choices = data.get("choices", [])
+        if not choices:
+            return ""
+        return str(choices[0].get("message", {}).get("content", "")).strip()
 
 
 async def _post_json(url: str, payload: dict, *, headers: dict | None = None) -> dict:

@@ -125,9 +125,11 @@ class Runtime:
             )
 
         handler = loaded.handler_cls(manifest)
+        # The raw connector is held on ActiveTile (runtime-internal, used by the
+        # gate to execute approved actions). It is deliberately NOT placed on the
+        # RunContext, so a handler cannot reach it to fire a side effect inline.
         context = RunContext(
             manifest=manifest,
-            connector=connector,
             resolved_brain=resolved,
             tools=tools,
             model=ModelHandle(self.model, resolved),

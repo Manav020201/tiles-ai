@@ -21,7 +21,6 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .connector import Connector
 from .tile_manifest import TileManifest
 
 
@@ -86,15 +85,22 @@ class ActionPlan(BaseModel):
 class RunContext(BaseModel):
     """Everything a handler needs at run time, assembled by the runtime.
 
-    The handler receives its resolved manifest, its bound connector (or None for
-    instant tiles), and the resolved brain descriptor. It does NOT receive raw
-    secrets — model calls go through the model_adapter the runtime wires in.
+    The handler receives its resolved manifest, a read-only `tools` handle, a
+    `model` handle, and the resolved brain descriptor. It does NOT receive raw
+    secrets, and — deliberately — it does NOT receive the raw connector. A
+    handler therefore has exactly two ways to touch the world:
+
+      * read via `ctx.tools` (allow-listed, non-side-effectful only), and
+      * propose side effects via the returned `ActionPlan`.
+
+    The permission gate is the single path through which any side effect can
+    actually execute. Removing the raw connector from this context is what makes
+    that a structural guarantee instead of a convention a handler could ignore.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
 
     manifest: TileManifest
-    connector: Connector | None = None
     resolved_brain: Any = None  # ResolvedBrain; typed Any to avoid an import cycle.
 
     tools: Any = None

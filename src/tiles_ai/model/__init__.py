@@ -13,6 +13,7 @@ from .adapter import (
     TestResult,
     default_client_factory,
     echo_client_factory,
+    register_hosted_client,
 )
 from .clients import (
     AnthropicClient,
@@ -20,6 +21,7 @@ from .clients import (
     ModelClient,
     ModelClientError,
     OllamaClient,
+    OpenAIClient,
 )
 from .store import BrainStore
 
@@ -30,9 +32,11 @@ __all__ = [
     "ClientFactory",
     "default_client_factory",
     "echo_client_factory",
+    "register_hosted_client",
     "ModelClient",
     "ModelClientError",
     "EchoModelClient",
     "OllamaClient",
     "AnthropicClient",
+    "OpenAIClient",
 ]

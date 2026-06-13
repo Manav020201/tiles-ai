@@ -97,7 +97,7 @@ def test_draft_tile_proposes_action_that_gate_queues():
     async def go():
         manifest = _manifest()
         tile = DraftTile(manifest)
-        ctx = RunContext(manifest=manifest, connector=FakeConnector("gmail"))
+        ctx = RunContext(manifest=manifest)
         await tile.on_activate(ctx)
         plan = await tile.run("go", ctx)
         await tile.on_deactivate()

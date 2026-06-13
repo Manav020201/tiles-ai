@@ -90,6 +90,32 @@ def test_run_before_activate_raises():
     asyncio.run(go())
 
 
+def test_gate_is_the_only_path_to_side_effects():
+    # The handler's RunContext exposes no raw connector — the field is gone and
+    # the model rejects it — so a handler cannot fire a side effect inline.
+    from pydantic import ValidationError
+    from tiles_ai.contracts import RunContext, TileManifest
+
+    async def go():
+        rt = _runtime()
+        active = await rt.activate("inbox-summary")
+        assert not hasattr(active.context, "connector")
+
+    asyncio.run(go())
+
+    manifest = TileManifest.model_validate(
+        {
+            "id": "x",
+            "name": "X",
+            "description": "x",
+            "instructions": "x",
+            "permission_tier": "read_only",
+        }
+    )
+    with pytest.raises(ValidationError):
+        RunContext(manifest=manifest, connector="anything")  # forbidden field
+
+
 def test_tool_proxy_denies_unlisted_and_side_effect_tools():
     async def go():
         rt = _runtime()

@@ -31,6 +31,7 @@ from .clients import (
     ModelClient,
     ModelClientError,
     OllamaClient,
+    OpenAIClient,
 )
 from .store import BrainStore
 
@@ -54,13 +55,30 @@ def default_client_factory(resolved: ResolvedBrain, config: BrainConfig) -> Mode
     if isinstance(provider, LocalProvider):
         return OllamaClient(endpoint=provider.endpoint, model=provider.model)
     if isinstance(provider, HostedProvider):
-        if provider.provider == "anthropic":
-            return AnthropicClient(api_key=provider.api_key, model=provider.model)
-        raise ModelClientError(
-            f"hosted provider '{provider.provider}' has no v0 client. "
-            "Anthropic is wired; others are the obvious next extension point."
-        )
+        builder = _HOSTED_CLIENTS.get(provider.provider)
+        if builder is None:
+            raise ModelClientError(
+                f"hosted provider '{provider.provider}' has no v0 client. "
+                f"Wired: {sorted(_HOSTED_CLIENTS)}. Register one via register_hosted_client."
+            )
+        return builder(provider.api_key, provider.model)
     raise ModelClientError(f"unknown provider kind for '{resolved.provider_id}'")
+
+
+# Hosted-provider client builders, keyed by provider family. The mapping is the
+# single extension point: add a provider by registering a builder, no edits to
+# the dispatch logic above.
+_HOSTED_CLIENTS: dict[str, Callable[[str, str], ModelClient]] = {
+    "anthropic": lambda key, model: AnthropicClient(api_key=key, model=model),
+    "openai": lambda key, model: OpenAIClient(api_key=key, model=model),
+}
+
+
+def register_hosted_client(
+    provider: str, builder: Callable[[str, str], ModelClient]
+) -> None:
+    """Register a client builder for a hosted provider family (api_key, model)."""
+    _HOSTED_CLIENTS[provider] = builder
 
 
 def echo_client_factory(resolved: ResolvedBrain, config: BrainConfig) -> ModelClient:
