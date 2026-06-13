@@ -1,0 +1,14 @@
+# Summarize — an instant tile. Paste text, get a tight summary. No setup.
+id: summarize
+name: Summarize
+description: Summarize anything you paste.
+icon: "📝"
+permission_tier: read_only
+
+instructions: >
+  Summarize the user's text into 3-5 tight bullet points. Preserve key facts,
+  names, numbers, and any action items. No preamble, no closing remark.
+
+consumes:
+  - name: text
+    description: Paste text to summarize…

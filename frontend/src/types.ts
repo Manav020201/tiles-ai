@@ -20,6 +20,8 @@ export interface Tile {
   uses_default_brain: boolean;
   brain: Brain | null;
   needs_brain: boolean;
+  wants_input: boolean;
+  input_hint: string | null;
 }
 
 export interface TileDetail extends Tile {

@@ -35,6 +35,8 @@ class TileSummary(BaseModel):
     uses_default_brain: bool
     brain: BrainView | None = None
     needs_brain: bool = False  # true if no brain could be resolved (no default set)
+    wants_input: bool = False  # true if the tile takes a freeform text input
+    input_hint: str | None = None  # placeholder for that input, if any
 
 
 class TileDetail(TileSummary):

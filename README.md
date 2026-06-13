@@ -34,6 +34,13 @@ cd frontend && npm install && npm run dev  # http://localhost:5173
 Drop `TILES_ECHO=1` to use a real brain; the store loads from `brain.local.yaml`
 (gitignored) and the board's onboarding writes it.
 
+**Starter board.** Five **instant** tiles work the moment a brain is connected —
+no app, no credentials: [Ask](tiles/ask), [Summarize](tiles/summarize),
+[Translate](tiles/translate), [Extract](tiles/extract),
+[Brainstorm](tiles/brainstorm). Two app tiles on a shared (mock) Gmail connector
+show the read vs. draft flow: [Inbox Summary](tiles/inbox-summary) (read_only) and
+[Reply Drafter](tiles/reply-drafter) (draft, queues for approval).
+
 API endpoints: `GET /api/tiles`, `POST /api/tiles/{id}/{activate,deactivate,run}`,
 `PUT /api/tiles/{id}/brain`, `GET /api/approvals`, `POST /api/approvals/{id}/resolve`,
 `GET/POST /api/providers`, `POST /api/providers/{id}/test`, `PUT /api/brain/default`,

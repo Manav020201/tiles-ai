@@ -92,6 +92,8 @@ def create_app(
             uses_default = resolved.source == "default"
         except BrainResolutionError:
             needs_brain = True
+        wants_input = len(m.consumes) > 0
+        input_hint = (m.consumes[0].description or m.consumes[0].name) if wants_input else None
         return TileSummary(
             id=m.id,
             name=m.name,
@@ -104,6 +106,8 @@ def create_app(
             uses_default_brain=uses_default,
             brain=brain,
             needs_brain=needs_brain,
+            wants_input=wants_input,
+            input_hint=input_hint,
         )
 
     def _provider_view(provider) -> ProviderView:

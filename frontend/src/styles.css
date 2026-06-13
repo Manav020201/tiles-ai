@@ -52,6 +52,20 @@ body {
 }
 .sidebar { display: flex; flex-direction: column; gap: 1.2rem; }
 
+.board-area { display: flex; flex-direction: column; gap: 1.6rem; }
+.board-group { display: flex; flex-direction: column; gap: 0.8rem; }
+.group-title {
+  margin: 0; font-size: 0.95rem; font-weight: 600;
+  display: flex; align-items: baseline; gap: 0.5rem; color: var(--text);
+}
+.group-hint { font-size: 0.72rem; font-weight: 400; color: var(--text-dim); }
+
+.tile-input {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 9px; padding: 0.5rem; color: var(--text);
+  font-size: 0.82rem; font-family: inherit; resize: vertical;
+}
+
 /* ---- tile ---- */
 .tile {
   position: relative;

@@ -1,0 +1,17 @@
+# Ask — an instant tile. No connector, no credentials, works in ~10 seconds.
+# This is the first thing a new user should run: it proves the brain works
+# without an auth screen.
+id: ask
+name: Ask
+description: Ask the model anything.
+icon: "💬"
+permission_tier: read_only
+
+instructions: >
+  You are a helpful, concise assistant. Answer the user's question directly and
+  accurately. If you are unsure, say so.
+
+# `consumes` tells the board this tile takes a freeform text input.
+consumes:
+  - name: prompt
+    description: Ask a question…

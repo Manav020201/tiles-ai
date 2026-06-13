@@ -1,0 +1,15 @@
+# Translate — an instant tile. Translates to English, or a language you name.
+id: translate
+name: Translate
+description: Translate text to English (or a language you name).
+icon: "🌐"
+permission_tier: read_only
+
+instructions: >
+  Translate the user's text to English. If the text starts with a target
+  language directive like "to Spanish:" or "to French:", translate to that
+  language instead and drop the directive. Return only the translation.
+
+consumes:
+  - name: text
+    description: Text to translate (optionally prefix "to <language>:")…

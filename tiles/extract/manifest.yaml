@@ -1,0 +1,15 @@
+# Extract — an instant tile. Pull structured info out of messy text.
+id: extract
+name: Extract
+description: Pull people, dates, tasks and links from messy text.
+icon: "🔎"
+permission_tier: read_only
+
+instructions: >
+  Extract the key entities and action items from the user's text. Return a short
+  Markdown list grouped under these headings, omitting any that are empty:
+  People, Dates, Tasks, Links. Be literal — do not invent details.
+
+consumes:
+  - name: text
+    description: Paste text to extract from…

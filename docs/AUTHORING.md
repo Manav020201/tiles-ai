@@ -135,14 +135,34 @@ anything that writes to the outside world.
 ### 5. Instant tiles (no connector)
 
 Omit `connector` and `allowed_tools` entirely. `ctx.tools` will be `None`; you
-just use `ctx.model`. This is how "Ask" / "Summarize what I paste" work — a win
-in ten seconds with zero setup.
+just use `ctx.model`. This is how "Ask" / "Summarize" work — a win in ten seconds
+with zero setup, and the first thing a new user should see.
+
+These are so common there's a reusable base, `PromptTile`, that runs the input
+through the brain using the manifest's `instructions`. Your handler becomes a
+one-liner and the *manifest* is the tile:
 
 ```python
-class Ask(Tile):
-    async def run(self, input, context) -> ActionPlan:
-        return ActionPlan(result=await context.model.complete(str(input)))
+from tiles_ai.handlers import PromptTile
+
+class Ask(PromptTile):
+    """Behavior is entirely in manifest.yaml (instructions)."""
 ```
+
+To take a freeform text input, declare it in `consumes` — the board renders an
+input box and uses its `description` as the placeholder:
+
+```yaml
+consumes:
+  - name: prompt
+    description: Ask a question…
+```
+
+The shipped instant tiles ([ask](../tiles/ask), [summarize](../tiles/summarize),
+[translate](../tiles/translate), [extract](../tiles/extract),
+[brainstorm](../tiles/brainstorm)) are all PromptTile + a manifest — read one and
+copy it. (Prefer writing `run` yourself for anything that reads from an app or
+proposes side effects.)
 
 ### 6. Optional hooks
 

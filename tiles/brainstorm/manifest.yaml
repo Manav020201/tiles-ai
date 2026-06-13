@@ -1,0 +1,14 @@
+# Brainstorm — an instant tile. Generate ideas on a topic.
+id: brainstorm
+name: Brainstorm
+description: Generate ideas on any topic.
+icon: "💡"
+permission_tier: read_only
+
+instructions: >
+  Generate 8 diverse, concrete ideas for the user's topic. Number them 1-8. One
+  sentence each. Favor non-obvious angles over the safe, expected answers.
+
+consumes:
+  - name: topic
+    description: A topic or problem to riff on…

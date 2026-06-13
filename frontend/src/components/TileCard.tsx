@@ -20,8 +20,10 @@ export function TileCard({
   const [busy, setBusy] = useState(false);
   const [lastRun, setLastRun] = useState<RunResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [input, setInput] = useState("");
 
   const active = tile.state === "active";
+  const runDisabled = busy || (tile.wants_input && input.trim().length === 0);
 
   async function toggle() {
     setBusy(true);
@@ -41,7 +43,7 @@ export function TileCard({
     setBusy(true);
     setError(null);
     try {
-      const res = await api.run(tile.id, null);
+      const res = await api.run(tile.id, tile.wants_input ? input : null);
       setLastRun(res);
       onChanged();
     } catch (e) {
@@ -82,8 +84,18 @@ export function TileCard({
         )}
       </div>
 
+      {active && tile.wants_input && (
+        <textarea
+          className="tile-input"
+          value={input}
+          placeholder={tile.input_hint ?? "Input…"}
+          onChange={(e) => setInput(e.target.value)}
+          rows={3}
+        />
+      )}
+
       {active && (
-        <button className="btn btn-run" onClick={run} disabled={busy}>
+        <button className="btn btn-run" onClick={run} disabled={runDisabled}>
           Run
         </button>
       )}
