@@ -1,0 +1,26 @@
+# Inbox Summary — a read_only reference tile.
+#
+# Reads the inbox through the Gmail connector and summarizes it. It never causes
+# a side effect, so its tier is read_only and it allow-lists only the read tool.
+#
+# Note there is NO `model` field: this tile uses the user's global default brain.
+# That is the zero-friction default — a beginner connects one brain and this
+# tile just works.
+id: inbox-summary
+name: Inbox Summary
+description: Summarize my unread email.
+icon: "📥"
+
+connector: gmail
+allowed_tools: [list_messages]     # read only; send_message is deliberately not granted
+permission_tier: read_only
+
+instructions: >
+  You summarize an email inbox. Given a list of messages, return three short
+  bullet points covering what needs attention. Be terse.
+
+# Composition seam (reserved): this tile advertises an inbox summary other tiles
+# could one day consume. Nothing consumes it in v0.
+provides:
+  - name: email.summary
+    description: A short, bulleted summary of the inbox.

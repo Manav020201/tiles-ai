@@ -97,6 +97,23 @@ class RunContext(BaseModel):
     connector: Connector | None = None
     resolved_brain: Any = None  # ResolvedBrain; typed Any to avoid an import cycle.
 
+    tools: Any = None
+    """Allow-list-enforcing handle for *reading* through the bound connector.
+
+    `await ctx.tools.call(name, args)` routes to the connector, but only for
+    tools in `allowed_tools` and only for non-side-effectful ones — a handler
+    must *propose* side effects via the returned ActionPlan, never execute them
+    inline. None for instant tiles (no connector). Wired by the runtime; typed
+    Any to keep the contract free of a runtime import.
+    """
+
+    model: Any = None
+    """Handle to the tile's resolved brain.
+
+    `await ctx.model.complete(prompt, system=...)` calls whatever model resolved
+    for this tile (its pin, or the global default). Wired by the runtime.
+    """
+
 
 class Tile(abc.ABC):
     """Base class every tile handler implements.

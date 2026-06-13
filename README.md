@@ -6,10 +6,11 @@ control plane around your agents: **register → activate → observe → permis
 (later) compose.** It is *not* another framework for writing agent logic — a
 tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 
-> **Status: v0, phase 1 (the contract).** This repo currently ships the *spec*
-> — the manifest schemas, the connector/tile interfaces, the lifecycle, the
-> permission tiers, and the brain-resolution logic, with tests. The runtime,
-> API, and board come next. See [`SPEC.md`](SPEC.md).
+> **Status: v0, phases 1–3 done.** The contract (schemas, interfaces, lifecycle,
+> permission tiers, brain resolution), the registry/loader, and the runtime
+> stack (mock connector layer, model adapter, permission gate + approval queue)
+> are in, with a working `read_only` reference tile and 67 tests. The FastAPI
+> layer and React board come next. See [`SPEC.md`](SPEC.md).
 
 ## Why it exists
 

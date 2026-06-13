@@ -45,6 +45,7 @@ from .provider_config import (
     BrainResolutionError,
     HostedProvider,
     LocalProvider,
+    Provider,
     ProviderKind,
     ResolvedBrain,
     resolve_brain,
@@ -77,6 +78,7 @@ __all__ = [
     # brain
     "BrainConfig",
     "ProviderKind",
+    "Provider",
     "HostedProvider",
     "LocalProvider",
     "ResolvedBrain",

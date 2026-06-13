@@ -220,12 +220,12 @@ it.
 
 ## Build order
 
-1. **Spec + skeleton** — manifests, brain schema, interfaces, lifecycle,
-   permission tiers as documented code + this SPEC + contract tests. **← you are here.** _Pause for review._
-2. Registry + loader.
-3. Connector layer (mock) + runtime + permission gate + model_adapter +
-   one `read_only` reference tile.
-4. FastAPI endpoints + event stream + a `draft` reference tile + approval queue.
+1. ~~**Spec + skeleton** — manifests, brain schema, interfaces, lifecycle,
+   permission tiers as documented code + this SPEC + contract tests.~~ ✅ done
+2. ~~Registry + loader.~~ ✅ done
+3. ~~Connector layer (mock) + runtime + permission gate + model_adapter +
+   one `read_only` reference tile.~~ ✅ done
+4. FastAPI endpoints + event stream + a `draft` reference tile + approval queue. **← next**
 5. React board UI (onboarding, activation, badges, activity feed, approvals,
    brain override).
 6. Docs + license.

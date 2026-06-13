@@ -1,0 +1,28 @@
+# Gmail connector (v0: mock).
+#
+# A connector is the durable connection to one app: its auth and its tool
+# surface. Many tiles bind to this one connector. In v0 it is a `mock` — no
+# server, no credentials — but the tool surface and side-effect flags are real,
+# so tiles behave exactly as they will against a real MCP-backed Gmail later.
+id: gmail
+app: Gmail
+kind: mock
+
+auth:
+  scheme: none      # mocked in v0; real OAuth plugs in here later
+  scopes: []
+
+tools:
+  - name: list_messages
+    description: List recent messages in the inbox.
+    side_effect: false          # a read — safe for read_only tiles
+  - name: send_message
+    description: Send an email.
+    side_effect: true           # touches the world — gated behind approval
+    input_schema:
+      type: object
+      properties:
+        to: { type: string }
+        subject: { type: string }
+        body: { type: string }
+      required: [to, body]

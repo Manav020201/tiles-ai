@@ -17,7 +17,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .connector_manifest import AuthConfig, ToolSpec
+from .connector_manifest import AuthConfig, ConnectorManifest, ToolSpec
 
 
 class Session(BaseModel):
@@ -59,6 +59,18 @@ class Connector(abc.ABC):
 
     def __init__(self, manifest_id: str) -> None:
         self.manifest_id = manifest_id
+
+    @classmethod
+    def from_manifest(cls, manifest: "ConnectorManifest") -> "Connector":
+        """Construct a connector from its manifest.
+
+        The runtime instantiates every connector through this factory, so it has
+        a single uniform call site regardless of what a particular connector
+        needs. The default passes just the id (the minimal contract); a
+        connector that needs the full tool surface — like the generic mock —
+        overrides this to pass the whole manifest to its own constructor.
+        """
+        return cls(manifest.id)
 
     @abc.abstractmethod
     async def connect(self, auth: AuthConfig) -> Session:
