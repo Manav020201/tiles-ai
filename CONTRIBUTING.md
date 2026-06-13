@@ -50,7 +50,7 @@ cd frontend && npm run dev             # board on :5173
 src/tiles_ai/
   contracts/    # THE SPINE — schemas, interfaces, lifecycle, permissions, brain
   registry/     # discover + validate + load connector/tile folders
-  connectors/   # connector layer (mock today; MCP-backed later)
+  connectors/   # connector layer (mock + a real MCP-backed connector)
   model/        # brain store + model adapter (Anthropic/OpenAI/Ollama/echo)
   runtime/      # activation, permission gate + approval queue, tool/model handles
   events/       # in-process event bus

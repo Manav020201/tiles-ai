@@ -1,0 +1,23 @@
+# Ask My Files — a read_only tile over the REAL (MCP-backed) local-files connector.
+# Reads your local documents and answers questions about them. Never writes.
+id: ask-my-files
+name: Ask My Files
+description: Answer questions about your local documents.
+icon: "📂"
+
+connector: local-files
+allowed_tools: [list_dir, read_file]   # reads only
+permission_tier: read_only
+
+instructions: >
+  You answer the user's question using only the provided documents. Cite the
+  file name you drew each fact from. If the documents don't contain the answer,
+  say so.
+
+consumes:
+  - name: question
+    description: Ask about your documents…
+
+provides:
+  - name: docs.answer
+    description: An answer grounded in local documents.

@@ -226,9 +226,15 @@ for tests/demos. A new hosted provider is added by registering a builder
 - **Scheduled / event triggers.** v0 activation is manual only.
 - **Multi-user, accounts, hosted deployment, marketplace.**
 - **Real OAuth.** Reference tiles use mock side effects / simple keys. `AuthConfig`
-  is the declared hook for real auth.
-- **Live MCP servers.** The `Connector` interface is the abstraction; v0 ships a
-  mock. A real MCP connector drops in without changing the tile contract.
+  is the declared hook for real auth — including credential/env injection for MCP
+  servers that need it.
+
+Now implemented beyond the original v0 line:
+
+- **MCP connectors.** A real `MCPConnector` ships (stdio transport, stdlib
+  JSON-RPC), satisfying the same `Connector` interface as the mock. HTTP/SSE
+  transport is the remaining extension point. The manifest stays the authority on
+  the tool surface + `side_effect`; the live server executes.
 
 ## Build order
 

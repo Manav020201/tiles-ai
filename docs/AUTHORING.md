@@ -239,31 +239,39 @@ class MyAppMock(MockConnector):
         self.set_response("create_thing", lambda args: {"created": args})
 ```
 
-For a real connector (e.g. MCP-backed), implement the interface directly:
+**The common real case is an MCP server** — and you don't write any protocol
+code. Set `kind: mcp`, point `endpoint` at the launch command, declare the tool
+surface, and subclass `MCPConnector`:
 
-```python
-from tiles_ai.contracts import Connector, Session, ToolResult, ToolSpec
-
-class MyAppConnector(Connector):
-    @classmethod
-    def from_manifest(cls, manifest):
-        return cls(manifest.id)            # or pass the whole manifest if you need it
-
-    async def connect(self, auth) -> Session:
-        ...                                # run your auth flow; return a Session
-
-    async def list_tools(self) -> list[ToolSpec]:
-        ...
-
-    async def call_tool(self, name, args, context) -> ToolResult:
-        # MUST set side_effect on the result to reflect whether the call
-        # touched the world (echo the tool's declared flag).
-        ...
+```yaml
+# connectors/my-app/manifest.yaml
+id: my-app
+app: My App
+kind: mcp
+endpoint: "npx -y @modelcontextprotocol/server-everything"   # any MCP stdio server
+tools:
+  - { name: do_thing, description: "…", side_effect: true }
 ```
 
-The runtime instantiates every connector via `from_manifest`, connects it, and
-routes a tile's allow-listed tool calls through it — your tile code is identical
-whether it's the mock or the real thing.
+```python
+# connectors/my-app/adapter.py
+from tiles_ai.connectors import MCPConnector
+
+class MyApp(MCPConnector):
+    """Logic lives in MCPConnector; the manifest is the connector."""
+```
+
+The manifest's `tools` (and their `side_effect` flags) stay the authority the
+registry validates and the gate trusts; the live server executes. Use
+`MCPConnector.live_tools()` to introspect a running server while writing the
+manifest. See [connectors/local-files](../connectors/local-files) for a working
+example backed by the bundled [example server](../examples/mcp_servers/files_server.py).
+
+For something neither mock nor MCP, implement `Connector` directly
+(`connect` / `list_tools` / `call_tool` / `disconnect`). `call_tool` MUST set
+`side_effect` on its result. The runtime instantiates every connector via
+`from_manifest`, connects it, and routes allow-listed calls through it — your
+tile code is identical whichever kind it is.
 
 ### 4. Bind a tile to it
 

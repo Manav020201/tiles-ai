@@ -66,9 +66,13 @@ Tile       = an agent on top: model + instructions + permission tier,
 Brain      = one global model provider config; tiles use it unless they pin one.
 ```
 
-A connector is, in the general case, a binding to an app's **MCP** server. v0
-ships a `mock` connector; a real MCP-backed one drops in without changing the
-tile contract.
+A connector is, in the general case, a binding to an app's **MCP** server. Both
+a `mock` connector and a real **MCP-backed** one ship today — and they satisfy
+the same interface, so tiles binding either are identical. The
+[local-files connector](connectors/local-files) is real: it launches an MCP
+server over stdio, and [Ask My Files](tiles/ask-my-files) reads your documents
+through it. Point its `endpoint` at any MCP server (`npx … server-filesystem`,
+GitHub, Slack, …) and the tiles are unchanged.
 
 ## Architecture
 

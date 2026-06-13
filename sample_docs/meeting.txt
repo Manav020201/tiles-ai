@@ -1,0 +1,7 @@
+Standup — Monday
+
+Jane: finished the auth flow, starting on the dashboard.
+Sam: reviewing the payments PR, blocked on sandbox credentials.
+Action items:
+- Sam to chase the sandbox credentials by Wednesday.
+- Jane to demo the dashboard on Friday.

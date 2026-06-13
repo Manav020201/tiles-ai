@@ -1,0 +1,24 @@
+# Local files — a REAL (MCP-backed) connector, not a mock.
+#
+# `endpoint` is the command that launches the MCP server (run from the repo
+# root). The bundled example server exposes read-only filesystem tools confined
+# to the directory you point it at — here, ./sample_docs.
+#
+# The tool surface + side_effect flags below are the authority the registry
+# validates against and the permission gate trusts; the live server executes.
+id: local-files
+app: Local files
+kind: mcp
+endpoint: "python3 examples/mcp_servers/files_server.py sample_docs"
+
+auth:
+  scheme: none          # the example server needs none; real servers' auth is the hook
+  scopes: []
+
+tools:
+  - name: list_dir
+    description: List entries in a directory.
+    side_effect: false
+  - name: read_file
+    description: Read a UTF-8 text file.
+    side_effect: false
