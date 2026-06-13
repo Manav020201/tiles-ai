@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local secrets / brain store (never commit API keys)
+*.local.yaml
+*.local.json
+brain.local.*
+.env
+
+# Node / frontend (phase 5)
+node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+.claude/settings.local.json
