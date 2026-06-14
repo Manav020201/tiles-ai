@@ -8,10 +8,19 @@ Releases are built and published to PyPI by CI on a version tag.
    at this GitHub repo and the `release.yml` workflow (no API token needed).
 2. Create a GitHub Environment named `pypi` (Settings → Environments).
 
+## Pre-flight checklist
+
+- [ ] `pyproject.toml` `[project.urls]` and the README CI badge point at the real repo
+- [ ] `authors` in `pyproject.toml` is correct
+- [ ] The PyPI project name (`tiles-ai`) is available / owned by you
+- [ ] PyPI Trusted Publishing + the `pypi` environment are configured (above)
+- [ ] CI is green on `main`
+- [ ] `CHANGELOG.md` has an entry for the new version
+
 ## Cut a release
 
 1. Bump the version in `pyproject.toml` and `src/tiles_ai/__init__.py`.
-2. Update `CHANGELOG.md`.
+2. Move the `CHANGELOG.md` `[Unreleased]` items under the new version + date.
 3. Commit, then tag and push:
    ```bash
    git tag v0.1.0

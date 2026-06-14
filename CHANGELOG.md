@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-14
+
+First public release.
+
 ### Added
 - **`tiles` CLI**: `tiles up` (run API + board, `--echo` for an offline demo
   brain), `tiles list`, `tiles new <id>` (scaffold a tile).

@@ -20,6 +20,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
+from .. import __version__
 from ..contracts import (
     BrainResolutionError,
     HostedProvider,
@@ -62,7 +63,7 @@ def create_app(
     bus = EventBus()
     runtime = Runtime(registry, adapter, events=bus)
 
-    app = FastAPI(title="Tiles AI", version="0.0.1")
+    app = FastAPI(title="Tiles AI", version=__version__)
     app.state.registry = registry
     app.state.store = store
     app.state.adapter = adapter

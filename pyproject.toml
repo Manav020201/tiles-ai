@@ -4,14 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tiles-ai"
-version = "0.0.1"
+version = "0.1.0"
 description = "Tiles AI — a phone-home-screen control plane for AI agents. Register, activate, observe, and permission tiles."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
+authors = [{ name = "Manav Singhai", email = "manavsinghai11@gmail.com" }]
+keywords = ["ai", "agents", "llm", "mcp", "control-plane", "fastapi"]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
     "pydantic>=2.6",
@@ -55,8 +62,9 @@ ignore = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-# The built board, bundled into the wheel by the release build (see RELEASING.md).
-tiles_ai = ["web/**/*"]
+# py.typed ships type info (PEP 561). web/** is the built board, bundled into the
+# wheel by the release build (see RELEASING.md).
+tiles_ai = ["py.typed", "web/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
