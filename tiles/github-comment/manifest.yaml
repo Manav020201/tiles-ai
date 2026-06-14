@@ -1,0 +1,22 @@
+# GitHub Comment — draft. Drafts an issue comment and queues it for approval.
+id: github-comment
+name: GitHub Comment
+description: Draft a comment on an issue (queued for approval).
+icon: "💬"
+
+connector: github
+# Reads the issue, proposes the comment. The send is gated by the draft tier.
+allowed_tools: [get_issue, add_issue_comment]
+permission_tier: draft
+
+instructions: >
+  You draft a concise, helpful GitHub issue comment. Match the issue's tone, be
+  specific, and don't over-promise. Return only the comment body.
+
+consumes:
+  - name: target
+    description: "owner/repo#issue: what you want to say"
+
+provides:
+  - name: github.comment_draft
+    description: A proposed issue comment, pending approval.

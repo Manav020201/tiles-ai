@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -94,6 +95,14 @@ def create_app(
             needs_brain = True
         wants_input = len(m.consumes) > 0
         input_hint = (m.consumes[0].description or m.consumes[0].name) if wants_input else None
+
+        # Connector readiness: which required env vars (if any) aren't set yet.
+        missing_env: list[str] = []
+        if m.connector:
+            lc = registry.get_connector(m.connector)
+            if lc is not None:
+                missing_env = [e for e in lc.manifest.auth.env if not os.environ.get(e)]
+
         return TileSummary(
             id=m.id,
             name=m.name,
@@ -108,6 +117,8 @@ def create_app(
             needs_brain=needs_brain,
             wants_input=wants_input,
             input_hint=input_hint,
+            connector_ready=not missing_env,
+            missing_env=missing_env,
         )
 
     def _provider_view(provider) -> ProviderView:

@@ -24,8 +24,10 @@ export function TileCard({
 
   const active = tile.state === "active";
   const runDisabled = busy || (tile.wants_input && input.trim().length === 0);
+  const blocked = !tile.connector_ready && !active;
 
   async function toggle() {
+    if (blocked) return;
     setBusy(true);
     setError(null);
     try {
@@ -63,7 +65,12 @@ export function TileCard({
         ⚙
       </button>
 
-      <button className="tile-face" onClick={toggle} disabled={busy} title={active ? "Tap to stop" : "Tap to run"}>
+      <button
+        className="tile-face"
+        onClick={toggle}
+        disabled={busy || blocked}
+        title={blocked ? `Set ${tile.missing_env.join(", ")}` : active ? "Tap to stop" : "Tap to run"}
+      >
         <span className="tile-icon">{tile.icon}</span>
         <span className="tile-name">{tile.name}</span>
         <span className={`status-dot ${active ? "on" : "off"}`} />
@@ -80,6 +87,11 @@ export function TileCard({
         ) : (
           <span className="pill pill-brain" title={tile.brain?.label}>
             {tile.uses_default_brain ? "default" : "pinned"}: {tile.brain?.model}
+          </span>
+        )}
+        {!tile.connector_ready && (
+          <span className="pill pill-warn" title={`Set: ${tile.missing_env.join(", ")}`}>
+            needs {tile.missing_env.join(", ")}
           </span>
         )}
       </div>

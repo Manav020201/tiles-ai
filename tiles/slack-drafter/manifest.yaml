@@ -1,0 +1,22 @@
+# Slack Drafter — draft. Drafts a message and queues it for approval.
+id: slack-drafter
+name: Message Drafter
+description: Draft a Slack message (queued for approval).
+icon: "✍️"
+
+connector: slack
+# Reads recent context, proposes the post. The send is gated by the draft tier.
+allowed_tools: [slack_get_channel_history, slack_post_message]
+permission_tier: draft
+
+instructions: >
+  You draft a clear, friendly Slack message that fits the channel's tone and
+  recent context. Keep it short. Return only the message text.
+
+consumes:
+  - name: target
+    description: "#channel: what you want to say"
+
+provides:
+  - name: slack.message_draft
+    description: A proposed Slack message, pending approval.

@@ -20,6 +20,7 @@ backend for the `connectors/local-files` connector. Run it directly:
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -44,6 +45,12 @@ TOOLS = [
             "properties": {"path": {"type": "string"}},
             "required": ["path"],
         },
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "whoami",
+        "description": "Return the FILES_USER env var (demonstrates env passthrough).",
+        "inputSchema": {"type": "object", "properties": {}},
         "annotations": {"readOnlyHint": True},
     },
 ]
@@ -80,6 +87,8 @@ def _call_tool(name: str, args: dict) -> str:
         return _list_dir(args.get("path", "."))
     if name == "read_file":
         return _read_file(args["path"])
+    if name == "whoami":
+        return os.environ.get("FILES_USER", "anonymous")
     raise ValueError(f"unknown tool '{name}'")
 
 

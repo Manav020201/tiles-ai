@@ -53,6 +53,15 @@ class AuthConfig(BaseModel):
         default_factory=list,
         description="Permission scopes the connection requests from the app.",
     )
+    env: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Names (not values) of environment variables the connector's server "
+            "requires, e.g. ['GITHUB_PERSONAL_ACCESS_TOKEN']. The MCP connector "
+            "passes them through from the host environment to the launched server "
+            "and fails fast if one is missing. Values never live in a manifest."
+        ),
+    )
 
 
 class ToolSpec(BaseModel):

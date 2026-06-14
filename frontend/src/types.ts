@@ -22,6 +22,8 @@ export interface Tile {
   needs_brain: boolean;
   wants_input: boolean;
   input_hint: string | null;
+  connector_ready: boolean;
+  missing_env: string[];
 }
 
 export interface TileDetail extends Tile {

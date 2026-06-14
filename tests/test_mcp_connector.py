@@ -107,6 +107,46 @@ def test_registry_loads_mcp_connector_and_tile():
     assert tile.manifest.permission_tier.value == "read_only"
 
 
+def _manifest_with_env(root: Path) -> ConnectorManifest:
+    return ConnectorManifest.model_validate(
+        {
+            "id": "local-files",
+            "app": "Local files",
+            "kind": "mcp",
+            "endpoint": f"{sys.executable} {SERVER} {root}",
+            "auth": {"scheme": "api_key", "env": ["FILES_USER"]},
+            "tools": [{"name": "whoami", "description": "who", "side_effect": False}],
+        }
+    )
+
+
+def test_connect_fails_fast_when_required_env_missing(tmp_path, monkeypatch):
+    monkeypatch.delenv("FILES_USER", raising=False)
+
+    async def go():
+        c = MCPConnector.from_manifest(_manifest_with_env(tmp_path))
+        await c.connect(AuthConfig(env=["FILES_USER"]))
+
+    with pytest.raises(Exception) as exc:  # MCPError
+        asyncio.run(go())
+    assert "FILES_USER" in str(exc.value)
+
+
+def test_env_is_passed_through_to_the_server(tmp_path, monkeypatch):
+    monkeypatch.setenv("FILES_USER", "ada")
+
+    async def go():
+        c = MCPConnector.from_manifest(_manifest_with_env(tmp_path))
+        await c.connect(AuthConfig(env=["FILES_USER"]))
+        try:
+            return await c.call_tool("whoami", {}, _ctx())
+        finally:
+            await c.disconnect()
+
+    result = asyncio.run(go())
+    assert result.ok and result.output == "ada"
+
+
 @pytest.mark.skipif(shutil.which("python3") is None, reason="needs python3 on PATH")
 def test_runtime_reads_files_through_mcp_end_to_end():
     # Uses the committed connector (endpoint launches the example server relative

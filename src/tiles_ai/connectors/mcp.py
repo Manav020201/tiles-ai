@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import shlex
 from typing import Any
 
@@ -187,10 +188,21 @@ class MCPConnector(Connector):
     async def connect(self, auth: AuthConfig) -> Session:
         if not self.manifest.endpoint:
             raise MCPError(f"connector '{self.manifest_id}' has no endpoint command")
+
+        # Credential hook: the manifest names the env vars the server needs (not
+        # their values). Fail fast with a clear message if any is unset; the
+        # launched server inherits the host environment, so set ones are passed
+        # through automatically. Secrets never touch the manifest.
+        missing = [name for name in auth.env if not os.environ.get(name)]
+        if missing:
+            raise MCPError(
+                f"connector '{self.manifest_id}' needs environment variable(s) "
+                f"{missing} set before it can connect. Export them and retry."
+            )
+
         command = shlex.split(self.manifest.endpoint)
         self._client = StdioMCPClient(command)
         await self._client.start()
-        # v0 mocks auth; real credential/env injection is the declared auth hook.
         return Session(connector_id=self.manifest_id, connected=True)
 
     async def list_tools(self) -> list[ToolSpec]:

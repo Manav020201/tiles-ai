@@ -1,0 +1,21 @@
+# Slack — a real (MCP-backed) connector over the official Slack MCP server.
+#
+# Bring your own credentials: set SLACK_BOT_TOKEN and SLACK_TEAM_ID. Tiles bound
+# here show "needs token" until both are set. Tool names follow the official
+# @modelcontextprotocol/server-slack; adjust if your server version differs.
+id: slack
+app: Slack
+kind: mcp
+endpoint: "npx -y @modelcontextprotocol/server-slack"
+
+auth:
+  scheme: api_key
+  env: [SLACK_BOT_TOKEN, SLACK_TEAM_ID]
+
+tools:
+  - { name: slack_list_channels, description: List channels., side_effect: false }
+  - { name: slack_get_channel_history, description: Recent messages in a channel., side_effect: false }
+  - { name: slack_get_thread_replies, description: Replies in a thread., side_effect: false }
+  - { name: slack_get_users, description: List users., side_effect: false }
+  - { name: slack_post_message, description: Post a message to a channel., side_effect: true }
+  - { name: slack_reply_to_thread, description: Reply in a thread., side_effect: true }

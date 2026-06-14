@@ -1,0 +1,22 @@
+# GitHub Triage — read_only. Summarize and prioritize a repo's open issues.
+id: github-triage
+name: GitHub Triage
+description: Triage a repo's open issues.
+icon: "🐙"
+
+connector: github
+allowed_tools: [list_issues, get_issue, search_issues]   # reads only
+permission_tier: read_only
+
+instructions: >
+  You triage a GitHub repository's open issues. Group them by priority, flag
+  anything that looks urgent or like a regression, and call out duplicates. Be
+  brief; cite issue numbers.
+
+consumes:
+  - name: repo
+    description: "owner/repo to triage, e.g. octocat/hello-world"
+
+provides:
+  - name: github.triage
+    description: A prioritized digest of open issues.

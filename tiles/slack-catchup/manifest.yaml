@@ -1,0 +1,22 @@
+# Slack Catch-up — read_only. "What did I miss" in a channel.
+id: slack-catchup
+name: What did I miss
+description: Summarize recent activity in a Slack channel.
+icon: "💬"
+
+connector: slack
+allowed_tools: [slack_list_channels, slack_get_channel_history]   # reads only
+permission_tier: read_only
+
+instructions: >
+  You summarize recent Slack activity for someone catching up. Lead with
+  anything that needs a reply or a decision, then a short digest of the rest.
+  Note who is waiting on whom.
+
+consumes:
+  - name: channel
+    description: Channel name or id (e.g. #eng or C0123456)
+
+provides:
+  - name: slack.catchup
+    description: A catch-up summary of a channel.

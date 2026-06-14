@@ -37,6 +37,8 @@ class TileSummary(BaseModel):
     needs_brain: bool = False  # true if no brain could be resolved (no default set)
     wants_input: bool = False  # true if the tile takes a freeform text input
     input_hint: str | None = None  # placeholder for that input, if any
+    connector_ready: bool = True  # false if the connector is missing required env
+    missing_env: list[str] = []  # env vars the connector needs but that aren't set
 
 
 class TileDetail(TileSummary):

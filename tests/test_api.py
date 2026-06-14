@@ -162,6 +162,26 @@ def test_pin_brain_override():
     assert cleared["brain"]["model"] == "claude-opus-4-8"
 
 
+def test_connector_readiness_reflects_required_env(monkeypatch):
+    monkeypatch.delenv("GITHUB_PERSONAL_ACCESS_TOKEN", raising=False)
+    client, _ = _client()
+    tiles = {t["id"]: t for t in client.get("/api/tiles").json()}
+
+    # GitHub tiles need a token that isn't set -> not ready.
+    gh = tiles["github-triage"]
+    assert gh["connector_ready"] is False
+    assert "GITHUB_PERSONAL_ACCESS_TOKEN" in gh["missing_env"]
+
+    # Instant + mock-backed tiles need nothing -> ready.
+    assert tiles["ask"]["connector_ready"] is True
+    assert tiles["inbox-summary"]["connector_ready"] is True
+
+    # Set the token -> ready, no missing env.
+    monkeypatch.setenv("GITHUB_PERSONAL_ACCESS_TOKEN", "ghp_x")
+    gh2 = {t["id"]: t for t in client.get("/api/tiles").json()}["github-triage"]
+    assert gh2["connector_ready"] is True and gh2["missing_env"] == []
+
+
 def test_events_endpoint_receives_activation_event():
     # Subscribe to the app's bus directly, then trigger an action over HTTP and
     # confirm the event was published (covers runtime->bus emission end to end
