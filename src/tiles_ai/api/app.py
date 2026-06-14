@@ -18,6 +18,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from ..contracts import (
     BrainResolutionError,
@@ -264,6 +265,13 @@ def create_app(
         return StreamingResponse(
             _event_stream(bus, request), media_type="text/event-stream"
         )
+
+    # Serve the built board at the root if it has been built. Mounted last so the
+    # /api routes above take precedence. Run `npm --prefix frontend run build`,
+    # then `python -m tiles_ai.api` serves API + board on one port.
+    dist = Path(root) / "frontend" / "dist"
+    if dist.is_dir():
+        app.mount("/", StaticFiles(directory=str(dist), html=True), name="board")
 
     return app
 

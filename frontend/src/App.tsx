@@ -2,17 +2,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import type { Approval, Provider, Tile, TilesEvent } from "./types";
 import { Onboarding } from "./components/Onboarding";
-import { TileCard } from "./components/TileCard";
+import { TileIcon } from "./components/TileIcon";
+import { TileSheet } from "./components/TileSheet";
 import { Approvals } from "./components/Approvals";
 import { ActivityFeed } from "./components/ActivityFeed";
-import { TileSettings } from "./components/TileSettings";
 
 export function App() {
   const [providers, setProviders] = useState<Provider[] | null>(null);
   const [tiles, setTiles] = useState<Tile[]>([]);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [events, setEvents] = useState<TilesEvent[]>([]);
-  const [settingsFor, setSettingsFor] = useState<string | null>(null);
+  const [openTileId, setOpenTileId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const [t, a, p] = await Promise.all([
@@ -70,7 +70,7 @@ export function App() {
   }
 
   const defaultProvider = providers.find((p) => p.is_default);
-  const settingsTile = tiles.find((t) => t.id === settingsFor) ?? null;
+  const openTile = tiles.find((t) => t.id === openTileId) ?? null;
 
   return (
     <div className="app">
@@ -100,11 +100,10 @@ export function App() {
               </h2>
               <div className="board">
                 {items.map((tile) => (
-                  <TileCard
+                  <TileIcon
                     key={tile.id}
                     tile={tile}
-                    onChanged={refresh}
-                    onOpenSettings={() => setSettingsFor(tile.id)}
+                    onOpen={() => setOpenTileId(tile.id)}
                   />
                 ))}
               </div>
@@ -118,11 +117,11 @@ export function App() {
         </aside>
       </main>
 
-      {settingsTile && (
-        <TileSettings
-          tile={settingsTile}
+      {openTile && (
+        <TileSheet
+          tile={openTile}
           providers={providers}
-          onClose={() => setSettingsFor(null)}
+          onClose={() => setOpenTileId(null)}
           onChanged={refresh}
         />
       )}
