@@ -37,6 +37,7 @@ Frontend (Node ≥ 18):
 ```bash
 cd frontend
 npm install
+npm run test       # Vitest
 npm run build      # type-check + build
 npm run dev        # board against a running backend
 ```

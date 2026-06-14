@@ -9,9 +9,11 @@ All notable changes to this project are documented here. The format follows
 ### Added
 - **`tiles` CLI**: `tiles up` (run API + board, `--echo` for an offline demo
   brain), `tiles list`, `tiles new <id>` (scaffold a tile).
-- **CI** (GitHub Actions): backend lint (ruff) + tests on Python 3.11/3.12, and a
-  frontend type-check + build. **Release** workflow publishes to PyPI on a `v*`
-  tag via Trusted Publishing, bundling the built board into the wheel.
+- **CI** (GitHub Actions): backend lint (ruff) + tests on Python 3.11/3.12, and
+  frontend tests (Vitest) + type-check + build. **Release** workflow publishes to
+  PyPI on a `v*` tag via Trusted Publishing, bundling the built board into the wheel.
+- **Frontend tests** (Vitest + Testing Library): grouping/result helpers, the API
+  client, and the TileIcon component.
 - FastAPI serves the built board at `/` (dev build or the packaged board), so the
   whole app runs on one port.
 - Real **MCP-backed connector** (`MCPConnector`, stdio JSON-RPC) + an example

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, ApiError } from "../api";
 import type { Provider, RunResponse, Tile } from "../types";
+import { renderResult } from "../lib/runResult";
 
 // The "app view": a bottom sheet to run a tile and tune it. Holds the activate
 // toggle (green = running), input + Run, the last result, and the brain picker.
@@ -162,15 +163,4 @@ export function TileSheet({
       </div>
     </div>
   );
-}
-
-function renderResult(run: RunResponse): string {
-  const lines: string[] = [];
-  if (run.result != null) {
-    lines.push(typeof run.result === "string" ? run.result : JSON.stringify(run.result, null, 2));
-  }
-  if (run.queued.length) lines.push(`\n→ ${run.queued.length} action queued for approval`);
-  if (run.executed.length) lines.push(`\n→ ${run.executed.length} action executed`);
-  if (run.rejected.length) lines.push(`\n→ ${run.rejected.length} action rejected (tier)`);
-  return lines.join("");
 }
