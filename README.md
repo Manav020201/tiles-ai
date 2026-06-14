@@ -6,15 +6,15 @@ control plane around your agents: **register → activate → observe → permis
 (later) compose.** It is *not* another framework for writing agent logic — a
 tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 
-[![CI](https://github.com/manavsinghai/tiles-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/manavsinghai/tiles-ai/actions/workflows/ci.yml)
+[![CI](https://github.com/Manav020201/tiles-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Manav020201/tiles-ai/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Status: v0 complete.** The contract, registry/loader, runtime stack (mock
-> connector, model adapter, permission gate + approval queue), the FastAPI
-> control-plane API with an SSE event stream, and the React board (onboarding,
-> activation, badges, approvals, live feed, brain override) are all in — plus
-> `read_only` and `draft` reference tiles on a shared connector, and 85 backend
-> tests. See [`SPEC.md`](SPEC.md) for the full spec.
+> **Status: v0.1.0.** The contract, registry/loader, runtime stack, permission
+> gate + approval queue, FastAPI control plane with an SSE stream, and the
+> iOS-style React board are all in — plus a real **MCP-backed connector**, app
+> packs (GitHub · Slack · Web Search), instant tiles, and a `tiles` CLI. **122
+> tests** (107 backend, 15 frontend) and CI on Python 3.11/3.12. See
+> [`SPEC.md`](SPEC.md) for the full spec.
 
 **Docs:** [SPEC.md](SPEC.md) (the contract) · [docs/AUTHORING.md](docs/AUTHORING.md)
 (write a tile or connector) · [CONTRIBUTING.md](CONTRIBUTING.md) ·
@@ -128,12 +128,12 @@ Full walkthrough — including adding a connector — in
 ([inbox-summary](tiles/inbox-summary), [reply-drafter](tiles/reply-drafter)) are
 meant to be read end to end and copied.
 
-## Out of scope for v0 (seams left, not built)
+## Not built yet (seams left for later)
 
 Multi-tile orchestration (the `provides`/`consumes` seam is declared) · scheduled
 / event triggers (activation is manual) · multi-user / hosting / marketplace ·
-real OAuth (the `auth` hook is declared) · live MCP servers (the `Connector`
-interface is the abstraction; a mock ships today).
+real OAuth (env-var credential passthrough ships today; full OAuth is the next
+step) · HTTP/SSE MCP transport (stdio ships today).
 
 ## Develop
 

@@ -38,9 +38,9 @@ dev = [
 tiles = "tiles_ai.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/manavsinghai/tiles-ai"
-Repository = "https://github.com/manavsinghai/tiles-ai"
-Issues = "https://github.com/manavsinghai/tiles-ai/issues"
+Homepage = "https://github.com/Manav020201/tiles-ai"
+Repository = "https://github.com/Manav020201/tiles-ai"
+Issues = "https://github.com/Manav020201/tiles-ai/issues"
 
 [tool.ruff]
 target-version = "py311"
