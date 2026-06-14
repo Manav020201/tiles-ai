@@ -17,17 +17,13 @@ def _store():
         ),
         make_default=True,
     )
-    store.add_provider(
-        LocalProvider(id="local", endpoint="http://localhost:11434", model="llama3")
-    )
+    store.add_provider(LocalProvider(id="local", endpoint="http://localhost:11434", model="llama3"))
     return store
 
 
 def test_first_provider_becomes_default():
     store = BrainStore()
-    store.add_provider(
-        HostedProvider(id="a", provider="anthropic", api_key="k", model="m")
-    )
+    store.add_provider(HostedProvider(id="a", provider="anthropic", api_key="k", model="m"))
     assert store.config.default_provider == "a"
 
 
@@ -63,14 +59,15 @@ def test_test_action_unknown_provider():
 
 def test_default_factory_builds_real_clients_without_network():
     # Construction only — no .complete() call, so no network is touched.
-    from tiles_ai.model.adapter import default_client_factory
     from tiles_ai.model import AnthropicClient, OllamaClient
 
     adapter = ModelAdapter(_store())  # default (real) factory
     cloud = adapter.client_for(adapter.resolve(None))
     assert isinstance(cloud, AnthropicClient)
     local = adapter.client_for(
-        adapter.resolve(ModelRef(provider="local", model="llama3", endpoint="http://localhost:11434"))
+        adapter.resolve(
+            ModelRef(provider="local", model="llama3", endpoint="http://localhost:11434")
+        )
     )
     assert isinstance(local, OllamaClient)
 
@@ -106,7 +103,7 @@ def test_unknown_hosted_provider_errors_with_wired_list():
 
 
 def test_register_hosted_client_extends_dispatch():
-    from tiles_ai.model import EchoModelClient, register_hosted_client
+    from tiles_ai.model import register_hosted_client
 
     register_hosted_client("cohere", lambda key, model: EchoModelClient(model=model))
     store = BrainStore()

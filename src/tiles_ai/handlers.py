@@ -34,7 +34,5 @@ class PromptTile(Tile):
 
     async def run(self, input: Any, context: RunContext) -> ActionPlan:
         prompt = "" if input is None else str(input)
-        completion = await context.model.complete(
-            prompt, system=context.manifest.instructions
-        )
+        completion = await context.model.complete(prompt, system=context.manifest.instructions)
         return ActionPlan(result=completion)

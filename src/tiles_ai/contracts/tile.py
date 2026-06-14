@@ -33,11 +33,11 @@ class ValidationResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
 
     @classmethod
-    def success(cls) -> "ValidationResult":
+    def success(cls) -> ValidationResult:
         return cls(ok=True)
 
     @classmethod
-    def failure(cls, *errors: str) -> "ValidationResult":
+    def failure(cls, *errors: str) -> ValidationResult:
         return cls(ok=False, errors=list(errors))
 
 

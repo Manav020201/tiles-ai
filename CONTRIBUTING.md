@@ -26,7 +26,11 @@ Backend (Python ≥ 3.11):
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest
+ruff check src tests && ruff format --check src tests   # what CI runs
 ```
+
+The `tiles` CLI is installed with the package: `tiles up --echo` to run, `tiles
+list` to inspect, `tiles new <id>` to scaffold a tile.
 
 Frontend (Node ≥ 18):
 
@@ -84,7 +88,8 @@ loads and runs.
 - Async tests use `asyncio.run` — no extra plugin.
 - API/integration tests run fully offline via the echo client (no network, no
   keys). Don't introduce tests that require live model calls.
-- Run `pytest` (backend) and `npm run build` (frontend) before opening a PR.
+- Run `pytest`, `ruff check`/`ruff format --check` (backend) and `npm run build`
+  (frontend) before opening a PR — these are exactly what CI enforces.
 
 ## Commits & PRs
 

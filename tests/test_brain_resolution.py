@@ -76,6 +76,4 @@ def test_default_provider_must_exist():
     from pydantic import ValidationError
 
     with pytest.raises(ValidationError):
-        BrainConfig.model_validate(
-            {"providers": [], "default_provider": "ghost"}
-        )
+        BrainConfig.model_validate({"providers": [], "default_provider": "ghost"})

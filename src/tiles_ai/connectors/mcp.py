@@ -26,6 +26,7 @@ MCP client works; the command lives in your own manifest.)
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
 import shlex
@@ -94,22 +95,18 @@ class StdioMCPClient:
         return result.get("tools", [])
 
     async def call_tool(self, name: str, arguments: dict) -> dict:
-        return await self._request(
-            "tools/call", {"name": name, "arguments": arguments or {}}
-        )
+        return await self._request("tools/call", {"name": name, "arguments": arguments or {}})
 
     async def stop(self) -> None:
         if self._proc is None:
             return
         if self._stderr_task is not None:
             self._stderr_task.cancel()
-        try:
+        with contextlib.suppress(ProcessLookupError):
             self._proc.terminate()
-        except ProcessLookupError:
-            pass
         try:
             await asyncio.wait_for(self._proc.wait(), timeout=5.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._proc.kill()
         self._proc = None
 
@@ -138,24 +135,18 @@ class StdioMCPClient:
 
     async def _request(self, method: str, params: dict) -> dict:
         req_id = self._next_id()
-        await self._write(
-            {"jsonrpc": "2.0", "id": req_id, "method": method, "params": params}
-        )
+        await self._write({"jsonrpc": "2.0", "id": req_id, "method": method, "params": params})
         assert self._proc is not None and self._proc.stdout is not None
         while True:
             try:
-                raw = await asyncio.wait_for(
-                    self._proc.stdout.readline(), timeout=_READ_TIMEOUT
-                )
-            except asyncio.TimeoutError as exc:
+                raw = await asyncio.wait_for(self._proc.stdout.readline(), timeout=_READ_TIMEOUT)
+            except TimeoutError as exc:
                 raise MCPError(
-                    f"timed out waiting for response to '{method}'"
-                    + self._stderr_hint()
+                    f"timed out waiting for response to '{method}'" + self._stderr_hint()
                 ) from exc
             if not raw:
                 raise MCPError(
-                    f"MCP server exited before responding to '{method}'"
-                    + self._stderr_hint()
+                    f"MCP server exited before responding to '{method}'" + self._stderr_hint()
                 )
             try:
                 data = json.loads(raw)
@@ -182,7 +173,7 @@ class MCPConnector(Connector):
         self._client: StdioMCPClient | None = None
 
     @classmethod
-    def from_manifest(cls, manifest: ConnectorManifest) -> "MCPConnector":
+    def from_manifest(cls, manifest: ConnectorManifest) -> MCPConnector:
         return cls(manifest)
 
     async def connect(self, auth: AuthConfig) -> Session:

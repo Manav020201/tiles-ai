@@ -7,17 +7,11 @@ def test_non_side_effect_always_executes():
 
 
 def test_read_only_rejects_side_effects():
-    assert (
-        evaluate(PermissionTier.READ_ONLY, is_side_effect=True)
-        is PermissionDecision.REJECT
-    )
+    assert evaluate(PermissionTier.READ_ONLY, is_side_effect=True) is PermissionDecision.REJECT
 
 
 def test_draft_queues_side_effects():
-    assert (
-        evaluate(PermissionTier.DRAFT, is_side_effect=True)
-        is PermissionDecision.QUEUE
-    )
+    assert evaluate(PermissionTier.DRAFT, is_side_effect=True) is PermissionDecision.QUEUE
     # Approval is irrelevant for draft — it always queues.
     assert (
         evaluate(PermissionTier.DRAFT, is_side_effect=True, approved=True)

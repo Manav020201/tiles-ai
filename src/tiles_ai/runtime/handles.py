@@ -60,7 +60,7 @@ class ToolProxy:
 class ModelHandle:
     """Binds the runtime's model adapter to a tile's resolved brain."""
 
-    def __init__(self, adapter: "object", resolved: ResolvedBrain) -> None:
+    def __init__(self, adapter: object, resolved: ResolvedBrain) -> None:
         # adapter typed loosely to avoid importing the model layer into a module
         # the contract-facing handler sees; it is always a ModelAdapter.
         self._adapter = adapter

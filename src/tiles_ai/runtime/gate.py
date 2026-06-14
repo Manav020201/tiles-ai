@@ -93,9 +93,7 @@ class PermissionGate:
         for action in actions:
             decision = evaluate(tier, action.side_effect, approved=approved)
             if decision is PermissionDecision.EXECUTE:
-                result = await self._execute(
-                    tile_id, action, connector, connector_manifest
-                )
+                result = await self._execute(tile_id, action, connector, connector_manifest)
                 outcome.executed.append(ExecutedAction(action, result))
             elif decision is PermissionDecision.QUEUE:
                 item = ApprovalItem(self._next_id(), tile_id, action)
@@ -110,8 +108,7 @@ class PermissionGate:
         return [
             i
             for i in self._items.values()
-            if i.status is ApprovalStatus.PENDING
-            and (tile_id is None or i.tile_id == tile_id)
+            if i.status is ApprovalStatus.PENDING and (tile_id is None or i.tile_id == tile_id)
         ]
 
     def get(self, approval_id: str) -> ApprovalItem | None:
@@ -137,9 +134,7 @@ class PermissionGate:
             item.note = "rejected by human"
             return item
 
-        item.result = await self._execute(
-            item.tile_id, item.action, connector, connector_manifest
-        )
+        item.result = await self._execute(item.tile_id, item.action, connector, connector_manifest)
         item.status = ApprovalStatus.EXECUTED
         return item
 

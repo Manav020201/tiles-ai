@@ -72,9 +72,7 @@ def test_draft_propose_queue_approve_flow():
     assert pending[0]["side_effect"] is True
     assert pending[0]["status"] == "pending"
 
-    resolved = client.post(
-        f"/api/approvals/{approval_id}/resolve", json={"approved": True}
-    ).json()
+    resolved = client.post(f"/api/approvals/{approval_id}/resolve", json={"approved": True}).json()
     assert resolved["status"] == "executed"
     assert resolved["output"]["status"] == "sent (mock)"
 
@@ -87,9 +85,7 @@ def test_draft_rejection_does_not_execute():
     client.post("/api/tiles/reply-drafter/activate")
     run = client.post("/api/tiles/reply-drafter/run", json={}).json()
     approval_id = run["queued"][0]["approval_id"]
-    resolved = client.post(
-        f"/api/approvals/{approval_id}/resolve", json={"approved": False}
-    ).json()
+    resolved = client.post(f"/api/approvals/{approval_id}/resolve", json={"approved": False}).json()
     assert resolved["status"] == "rejected"
     assert resolved["output"] is None
 
@@ -147,17 +143,13 @@ def test_pin_brain_override():
     assert before["brain"]["model"] == "claude-opus-4-8"
 
     # Pin it to the local provider.
-    pinned = client.put(
-        "/api/tiles/inbox-summary/brain", json={"provider_id": "local"}
-    ).json()
+    pinned = client.put("/api/tiles/inbox-summary/brain", json={"provider_id": "local"}).json()
     assert pinned["uses_default_brain"] is False
     assert pinned["brain"]["source"] == "pinned"
     assert pinned["brain"]["model"] == "llama3"
 
     # Clear the pin -> back to default.
-    cleared = client.put(
-        "/api/tiles/inbox-summary/brain", json={"provider_id": None}
-    ).json()
+    cleared = client.put("/api/tiles/inbox-summary/brain", json={"provider_id": None}).json()
     assert cleared["uses_default_brain"] is True
     assert cleared["brain"]["model"] == "claude-opus-4-8"
 

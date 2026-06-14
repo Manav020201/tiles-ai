@@ -61,7 +61,7 @@ class Connector(abc.ABC):
         self.manifest_id = manifest_id
 
     @classmethod
-    def from_manifest(cls, manifest: "ConnectorManifest") -> "Connector":
+    def from_manifest(cls, manifest: ConnectorManifest) -> Connector:
         """Construct a connector from its manifest.
 
         The runtime instantiates every connector through this factory, so it has
@@ -81,9 +81,7 @@ class Connector(abc.ABC):
         """Return the app's tool surface (the superset tiles draw from)."""
 
     @abc.abstractmethod
-    async def call_tool(
-        self, name: str, args: dict, context: "CallContext"
-    ) -> ToolResult:
+    async def call_tool(self, name: str, args: dict, context: CallContext) -> ToolResult:
         """Invoke one tool by name.
 
         Implementations MUST set `ToolResult.side_effect` to reflect whether the

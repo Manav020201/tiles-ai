@@ -22,6 +22,9 @@ node_modules/
 frontend/dist/
 *.tsbuildinfo
 
+# Board bundled into the package at release time (generated, not committed)
+src/tiles_ai/web/
+
 # OS
 .DS_Store
 .claude/settings.local.json

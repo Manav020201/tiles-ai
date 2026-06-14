@@ -27,6 +27,7 @@ class ContractError(Exception):
 
 # --- loading ---------------------------------------------------------------
 
+
 def load_connector_manifest(path: str | Path) -> ConnectorManifest:
     """Parse and validate a connector manifest YAML file."""
     data = _read_yaml(path)
@@ -49,6 +50,7 @@ def _read_yaml(path: str | Path) -> dict:
 
 # --- cross-manifest checks -------------------------------------------------
 
+
 def validate_tile_against_connector(
     tile: TileManifest, connector: ConnectorManifest | None
 ) -> list[str]:
@@ -67,9 +69,7 @@ def validate_tile_against_connector(
         # Instant tile: nothing to resolve. The tile model already forbids
         # allow-listing tools without a connector, but assert defensively.
         if tile.allowed_tools:
-            errors.append(
-                f"tile '{tile.id}' allow-lists tools but binds to no connector"
-            )
+            errors.append(f"tile '{tile.id}' allow-lists tools but binds to no connector")
         return errors
 
     if connector is None:
@@ -105,9 +105,7 @@ def validate_tile_against_connector(
     return errors
 
 
-def assert_tile_valid(
-    tile: TileManifest, connector: ConnectorManifest | None
-) -> None:
+def assert_tile_valid(tile: TileManifest, connector: ConnectorManifest | None) -> None:
     """Raise ContractError if the tile/connector pairing is invalid."""
     errors = validate_tile_against_connector(tile, connector)
     if errors:

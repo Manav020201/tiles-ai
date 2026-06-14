@@ -23,7 +23,8 @@ connector.
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ..contracts import (
     AuthConfig,
@@ -49,7 +50,7 @@ class MockConnector(Connector):
         self._connected = False
 
     @classmethod
-    def from_manifest(cls, manifest: ConnectorManifest) -> "MockConnector":
+    def from_manifest(cls, manifest: ConnectorManifest) -> MockConnector:
         # The mock needs the whole manifest (its tool surface), not just the id.
         return cls(manifest)
 

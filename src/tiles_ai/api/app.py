@@ -163,9 +163,9 @@ def create_app(
         try:
             await runtime.activate(tile_id)
         except RuntimeError_ as exc:
-            raise HTTPException(404, str(exc))
+            raise HTTPException(404, str(exc)) from exc
         except BrainResolutionError as exc:
-            raise HTTPException(409, str(exc))  # connect a brain first
+            raise HTTPException(409, str(exc)) from exc  # connect a brain first
         return _tile_summary(tile_id)
 
     @app.post("/api/tiles/{tile_id}/deactivate", response_model=TileSummary)
@@ -187,7 +187,7 @@ def create_app(
         try:
             outcome = await runtime.run(tile_id, body.input if body else None)
         except RuntimeError_ as exc:
-            raise HTTPException(409, str(exc))  # not active
+            raise HTTPException(409, str(exc)) from exc  # not active
         return RunResponse(
             tile_id=outcome.tile_id,
             result=outcome.result,
@@ -230,9 +230,9 @@ def create_app(
         try:
             item = await runtime.resolve_approval(approval_id, body.approved)
         except RuntimeError_ as exc:
-            raise HTTPException(404, str(exc))
+            raise HTTPException(404, str(exc)) from exc
         except ValueError as exc:
-            raise HTTPException(409, str(exc))  # already resolved
+            raise HTTPException(409, str(exc)) from exc  # already resolved
         return _approval_view(item)
 
     # --- providers (the brain layer) --------------------------------------
@@ -262,18 +262,27 @@ def create_app(
 
     @app.get("/api/events")
     async def events(request: Request) -> StreamingResponse:
-        return StreamingResponse(
-            _event_stream(bus, request), media_type="text/event-stream"
-        )
+        return StreamingResponse(_event_stream(bus, request), media_type="text/event-stream")
 
-    # Serve the built board at the root if it has been built. Mounted last so the
-    # /api routes above take precedence. Run `npm --prefix frontend run build`,
-    # then `python -m tiles_ai.api` serves API + board on one port.
-    dist = Path(root) / "frontend" / "dist"
-    if dist.is_dir():
-        app.mount("/", StaticFiles(directory=str(dist), html=True), name="board")
+    # Serve the built board at the root, mounted last so the /api routes take
+    # precedence. Prefer a freshly-built dev board (frontend/dist under the board
+    # root); fall back to the board bundled in the installed package (populated by
+    # the release build). So both `npm run build` + dev and `pipx install` work.
+    board = _board_dir(Path(root))
+    if board is not None:
+        app.mount("/", StaticFiles(directory=str(board), html=True), name="board")
 
     return app
+
+
+def _board_dir(root: Path) -> Path | None:
+    dev = root / "frontend" / "dist"
+    if dev.is_dir():
+        return dev
+    packaged = Path(__file__).resolve().parent.parent / "web"
+    if packaged.is_dir() and (packaged / "index.html").is_file():
+        return packaged
+    return None
 
 
 def format_sse(event: Event) -> str:
@@ -297,7 +306,7 @@ async def _event_stream(bus: EventBus, request: Request):
             try:
                 event = await asyncio.wait_for(q.get(), timeout=15.0)
                 yield format_sse(event)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 yield ": keepalive\n\n"  # comment frame keeps the connection warm
     finally:
         bus.unsubscribe(q)

@@ -30,7 +30,7 @@ def _runtime():
 def test_all_instant_tiles_load():
     reg = Registry.discover(REPO_ROOT)
     assert reg.ok, reg.report()
-    assert INSTANT_IDS <= set(reg.tiles)
+    assert set(reg.tiles) >= INSTANT_IDS
     for tid in INSTANT_IDS:
         tile = reg.tiles[tid]
         assert tile.manifest.connector is None  # no app

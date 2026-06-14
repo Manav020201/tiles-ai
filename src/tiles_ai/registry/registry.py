@@ -98,9 +98,7 @@ class Registry:
 
     def report(self) -> str:
         """A short human summary, handy for a CLI or startup log."""
-        lines = [
-            f"{len(self.connectors)} connector(s), {len(self.tiles)} tile(s) loaded."
-        ]
+        lines = [f"{len(self.connectors)} connector(s), {len(self.tiles)} tile(s) loaded."]
         if self.errors:
             lines.append(f"{len(self.errors)} error(s):")
             lines.extend(f"  - {e}" for e in self.errors)
@@ -109,7 +107,7 @@ class Registry:
     # --- discovery ---------------------------------------------------------
 
     @classmethod
-    def discover(cls, root: str | Path) -> "Registry":
+    def discover(cls, root: str | Path) -> Registry:
         """Build a registry from `<root>/connectors` and `<root>/tiles`."""
         root = Path(root)
         registry = cls()
@@ -170,9 +168,7 @@ class Registry:
                 continue
 
             if manifest.id in self.tiles:
-                self.errors.append(
-                    LoadError("tile", name, [f"duplicate tile id '{manifest.id}'"])
-                )
+                self.errors.append(LoadError("tile", name, [f"duplicate tile id '{manifest.id}'"]))
                 continue
 
             # Cross-manifest: does the bound connector (and each allow-listed

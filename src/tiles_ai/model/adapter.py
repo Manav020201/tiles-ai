@@ -13,8 +13,8 @@ picks a real client by provider kind.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from ..contracts import (
     BrainConfig,
@@ -74,9 +74,7 @@ _HOSTED_CLIENTS: dict[str, Callable[[str, str], ModelClient]] = {
 }
 
 
-def register_hosted_client(
-    provider: str, builder: Callable[[str, str], ModelClient]
-) -> None:
+def register_hosted_client(provider: str, builder: Callable[[str, str], ModelClient]) -> None:
     """Register a client builder for a hosted provider family (api_key, model)."""
     _HOSTED_CLIENTS[provider] = builder
 

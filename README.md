@@ -6,6 +6,7 @@ control plane around your agents: **register → activate → observe → permis
 (later) compose.** It is *not* another framework for writing agent logic — a
 tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 
+[![CI](https://github.com/manavsinghai/tiles-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/manavsinghai/tiles-ai/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > **Status: v0 complete.** The contract, registry/loader, runtime stack (mock
@@ -21,18 +22,24 @@ tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 
 ## Run it
 
+Once published, the whole app (API + board) runs on one port:
+
 ```bash
-pip install -e ".[dev]"
-
-# zero-setup demo: an offline echo brain, no keys, no network
-TILES_ECHO=1 python -m tiles_ai.api        # API on http://127.0.0.1:8000
-
-# the board (in another shell)
-cd frontend && npm install && npm run dev  # http://localhost:5173
+pipx install tiles-ai     # or: pip install tiles-ai
+tiles up --echo           # offline demo brain, no keys → http://127.0.0.1:8000
+tiles up                  # real brain (onboarding writes brain.local.yaml)
 ```
 
-Drop `TILES_ECHO=1` to use a real brain; the store loads from `brain.local.yaml`
-(gitignored) and the board's onboarding writes it.
+From a clone (with the board hot-reloading):
+
+```bash
+pip install -e ".[dev]"
+tiles up --echo                            # API on http://127.0.0.1:8000
+cd frontend && npm install && npm run dev  # board on http://localhost:5173
+```
+
+Other commands: `tiles list` (show discovered tiles/connectors), `tiles new <id>`
+(scaffold a tile). See [docs/AUTHORING.md](docs/AUTHORING.md).
 
 **Starter board.** Five **instant** tiles work the moment a brain is connected —
 no app, no credentials: [Ask](tiles/ask), [Summarize](tiles/summarize),

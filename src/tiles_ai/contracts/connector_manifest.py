@@ -119,16 +119,14 @@ class ConnectorManifest(BaseModel):
     )
 
     @model_validator(mode="after")
-    def _check_kind_invariants(self) -> "ConnectorManifest":
+    def _check_kind_invariants(self) -> ConnectorManifest:
         if self.kind is ConnectorKind.MCP and not self.endpoint:
             raise ValueError("connector kind=mcp requires an 'endpoint'")
 
         names = [t.name for t in self.tools]
         dupes = {n for n in names if names.count(n) > 1}
         if dupes:
-            raise ValueError(
-                f"duplicate tool names in connector '{self.id}': {sorted(dupes)}"
-            )
+            raise ValueError(f"duplicate tool names in connector '{self.id}': {sorted(dupes)}")
         return self
 
     def tool_names(self) -> set[str]:

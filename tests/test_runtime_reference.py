@@ -94,6 +94,7 @@ def test_gate_is_the_only_path_to_side_effects():
     # The handler's RunContext exposes no raw connector — the field is gone and
     # the model rejects it — so a handler cannot fire a side effect inline.
     from pydantic import ValidationError
+
     from tiles_ai.contracts import RunContext, TileManifest
 
     async def go():

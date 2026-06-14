@@ -30,7 +30,9 @@ def test_unsubscribe_stops_delivery():
 
 
 def test_format_sse_frame():
-    frame = format_sse(Event(type="action.queued", tile_id="reply-drafter", data={"tool": "send_message"}, ts=1.0))
+    frame = format_sse(
+        Event(type="action.queued", tile_id="reply-drafter", data={"tool": "send_message"}, ts=1.0)
+    )
     assert frame.startswith("event: action.queued\n")
     body = frame.split("data: ", 1)[1].split("\n\n")[0]
     parsed = json.loads(body)

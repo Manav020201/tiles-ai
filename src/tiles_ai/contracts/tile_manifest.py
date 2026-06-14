@@ -37,9 +37,7 @@ class ModelRef(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    provider: str = Field(
-        description="Provider family, e.g. 'anthropic', 'openai', 'ollama'."
-    )
+    provider: str = Field(description="Provider family, e.g. 'anthropic', 'openai', 'ollama'.")
     model: str = Field(description="Model name, e.g. 'claude-opus-4-8', 'llama3'.")
     endpoint: str | None = Field(
         default=None,
@@ -92,16 +90,14 @@ class TileManifest(BaseModel):
             "A tile sees only what it is granted, not the whole app surface."
         ),
     )
-    permission_tier: PermissionTier = Field(
-        description="read_only | draft | autonomous."
-    )
+    permission_tier: PermissionTier = Field(description="read_only | draft | autonomous.")
 
     # Composition seams (reserved; declared so future work plugs in cleanly).
     provides: list[Capability] = Field(default_factory=list)
     consumes: list[Capability] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def _check_invariants(self) -> "TileManifest":
+    def _check_invariants(self) -> TileManifest:
         if self.allowed_tools and not self.connector:
             raise ValueError(
                 f"tile '{self.id}' allow-lists tools {self.allowed_tools} but binds "
@@ -110,9 +106,7 @@ class TileManifest(BaseModel):
 
         dupes = {t for t in self.allowed_tools if self.allowed_tools.count(t) > 1}
         if dupes:
-            raise ValueError(
-                f"tile '{self.id}' has duplicate allowed_tools: {sorted(dupes)}"
-            )
+            raise ValueError(f"tile '{self.id}' has duplicate allowed_tools: {sorted(dupes)}")
 
         # read_only tiles must not allow-list a side-effectful tool. We can only
         # *fully* enforce this against a connector (see

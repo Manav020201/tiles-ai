@@ -26,7 +26,7 @@ class BrainStore:
         self._path = Path(path) if path else None
 
     @classmethod
-    def load(cls, path: str | Path) -> "BrainStore":
+    def load(cls, path: str | Path) -> BrainStore:
         """Load a brain store from a YAML file (or start empty if absent)."""
         p = Path(path)
         if not p.exists():
@@ -59,9 +59,7 @@ class BrainStore:
         self._config = BrainConfig(providers=providers, default_provider=default)
 
     def set_default(self, provider_id: str) -> None:
-        self._config = BrainConfig(
-            providers=self._config.providers, default_provider=provider_id
-        )
+        self._config = BrainConfig(providers=self._config.providers, default_provider=provider_id)
 
     def save(self, path: str | Path | None = None) -> Path:
         """Persist to YAML. Uses the load path if none is given."""

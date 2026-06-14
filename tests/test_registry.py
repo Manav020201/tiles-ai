@@ -35,6 +35,7 @@ VALID_HANDLER = textwrap.dedent(
 
 # --- fixture builders ------------------------------------------------------
 
+
 def _connector(root: Path, *, folder=None, manifest=None, adapter=VALID_ADAPTER):
     folder = folder or "gmail"
     manifest = manifest or textwrap.dedent(
@@ -81,6 +82,7 @@ def _tile(root: Path, *, folder=None, manifest=None, handler=VALID_HANDLER):
 
 
 # --- tests -----------------------------------------------------------------
+
 
 def test_empty_board_is_ok(tmp_path):
     reg = Registry.discover(tmp_path)

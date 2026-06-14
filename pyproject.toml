@@ -24,10 +24,39 @@ dependencies = [
 dev = [
     "pytest>=7.4",
     "httpx>=0.27",
+    "ruff>=0.6",
 ]
+
+[project.scripts]
+tiles = "tiles_ai.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/manavsinghai/tiles-ai"
+Repository = "https://github.com/manavsinghai/tiles-ai"
+Issues = "https://github.com/manavsinghai/tiles-ai/issues"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",   # line length — left to the author
+    "B008",   # FastAPI Depends-in-defaults pattern
+    "UP042",  # keep the intentional (str, Enum) mixin over StrEnum
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+# The built board, bundled into the wheel by the release build (see RELEASING.md).
+tiles_ai = ["web/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -18,7 +18,7 @@ Resolution order at run time: a tile's pinned `model` -> else `default_provider`
 from __future__ import annotations
 
 from enum import Enum
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -46,7 +46,7 @@ class HostedProvider(BaseModel):
         """The provider family a ModelRef matches against (the cloud vendor)."""
         return self.provider
 
-    def matches(self, ref: "ModelRef") -> bool:
+    def matches(self, ref: ModelRef) -> bool:
         """True if a tile's pinned ModelRef resolves to this provider."""
         return ref.provider == self.provider and ref.model == self.model
 
@@ -65,7 +65,7 @@ class LocalProvider(BaseModel):
         """Local providers report a 'local' family for badge display."""
         return "local"
 
-    def matches(self, ref: "ModelRef") -> bool:
+    def matches(self, ref: ModelRef) -> bool:
         """True if a tile's pinned ModelRef resolves to this local provider.
 
         Matched on endpoint + model, since a local 'provider' name is arbitrary.
@@ -75,7 +75,7 @@ class LocalProvider(BaseModel):
 
 # Discriminated union on `kind` — Pydantic picks the right class automatically
 # and gives clean errors when neither shape matches.
-Provider = Annotated[Union[HostedProvider, LocalProvider], Field(discriminator="kind")]
+Provider = Annotated[HostedProvider | LocalProvider, Field(discriminator="kind")]
 
 
 class BrainConfig(BaseModel):
@@ -94,7 +94,7 @@ class BrainConfig(BaseModel):
     )
 
     @model_validator(mode="after")
-    def _check(self) -> "BrainConfig":
+    def _check(self) -> BrainConfig:
         ids = [p.id for p in self.providers]
         dupes = {i for i in ids if ids.count(i) > 1}
         if dupes:
@@ -158,8 +158,7 @@ def resolve_brain(tile_model: ModelRef | None, config: BrainConfig) -> ResolvedB
             source="pinned",
             provider=tile_model.provider,
             model=tile_model.model,
-            endpoint=tile_model.endpoint
-            or (getattr(match, "endpoint", None) if match else None),
+            endpoint=tile_model.endpoint or (getattr(match, "endpoint", None) if match else None),
             provider_id=match.id if match else None,
         )
 

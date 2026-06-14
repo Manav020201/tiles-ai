@@ -37,13 +37,13 @@ class EventBus:
         for q in list(self._subscribers):
             q.put_nowait(event)
 
-    def subscribe(self) -> "asyncio.Queue[Event]":
+    def subscribe(self) -> asyncio.Queue[Event]:
         """Register a new subscriber queue. Caller must unsubscribe when done."""
         q: asyncio.Queue[Event] = asyncio.Queue()
         self._subscribers.add(q)
         return q
 
-    def unsubscribe(self, q: "asyncio.Queue[Event]") -> None:
+    def unsubscribe(self, q: asyncio.Queue[Event]) -> None:
         self._subscribers.discard(q)
 
     @property

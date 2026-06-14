@@ -1,0 +1,39 @@
+name: Release
+
+# Publishes to PyPI when a v* tag is pushed. Uses PyPI Trusted Publishing
+# (OIDC) — no API token needed once the project is configured as a trusted
+# publisher. See RELEASING.md.
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build and bundle the board
+        run: |
+          npm --prefix frontend ci
+          npm --prefix frontend run build
+          rm -rf src/tiles_ai/web
+          cp -r frontend/dist src/tiles_ai/web
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build sdist + wheel
+        run: |
+          pip install build
+          python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
