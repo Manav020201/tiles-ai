@@ -1,0 +1,17 @@
+# Web Search — a real (MCP-backed) connector over the Brave Search MCP server.
+#
+# Bring your own key: set BRAVE_API_KEY. Tiles bound here show "needs token" until
+# it is set. Tool names follow @modelcontextprotocol/server-brave-search; adjust
+# if your server version differs.
+id: web-search
+app: Web Search (Brave)
+kind: mcp
+endpoint: "npx -y @modelcontextprotocol/server-brave-search"
+
+auth:
+  scheme: api_key
+  env: [BRAVE_API_KEY]
+
+tools:
+  - { name: brave_web_search, description: Search the web., side_effect: false }
+  - { name: brave_local_search, description: Search local businesses and places., side_effect: false }

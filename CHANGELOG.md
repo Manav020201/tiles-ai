@@ -18,7 +18,9 @@ All notable changes to this project are documented here. The format follows
   server; a `local-files` connector and an `Ask My Files` tile.
 - Credential **auth hook**: connectors declare required env vars; the board shows
   "needs token" and blocks activation until they're set.
-- **App packs**: GitHub (triage, comment) and Slack (catch-up, drafter) tiles.
+- **App packs**: GitHub (triage, comment), Slack (catch-up, drafter), and Web
+  Search / Research (Brave) tiles. Pack handlers are unit-tested against fake
+  tool/model contexts (arg construction, propose→gate flow, degradation).
 - **Instant tiles**: Ask, Summarize, Translate, Extract, Brainstorm.
 - iOS-style board: graphite-glass app icons, a bottom sheet to run tiles, live
   activity feed, approvals, and a brain picker; light + dark.

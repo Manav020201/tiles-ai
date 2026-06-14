@@ -1,0 +1,21 @@
+# Web Search — read_only. Search the web and digest the top results.
+id: web-search
+name: Web Search
+description: Search the web and digest the results.
+icon: "🔍"
+
+connector: web-search
+allowed_tools: [brave_web_search]
+permission_tier: read_only
+
+instructions: >
+  Given web search results, write a short, neutral digest of what they say.
+  Group related points, note disagreements, and list the source titles you used.
+
+consumes:
+  - name: query
+    description: What to search for…
+
+provides:
+  - name: web.digest
+    description: A short digest of web search results.

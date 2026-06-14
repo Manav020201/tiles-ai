@@ -82,8 +82,9 @@ through it. Point its `endpoint` at any MCP server (`npx … server-filesystem`,
 GitHub, Slack, …) and the tiles are unchanged.
 
 **App packs.** Premade connectors + tiles ship for [GitHub](connectors/github)
-(triage issues, draft a comment) and [Slack](connectors/slack) (catch up, draft
-a message). They run on the official MCP servers — set the connector's token
+(triage issues, draft a comment), [Slack](connectors/slack) (catch up, draft a
+message), and [Web Search](connectors/web-search) (search, research). They run on
+the official MCP servers — set the connector's token
 (e.g. `GITHUB_PERSONAL_ACCESS_TOKEN`) and the board enables them; until then they
 show **needs token**. A connector's manifest names the env vars it needs (never
 the values); they pass through to the server and are never stored by Tiles AI.

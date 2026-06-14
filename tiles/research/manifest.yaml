@@ -1,0 +1,22 @@
+# Research — read_only. Answer a question, grounded in web sources.
+id: research
+name: Research
+description: Answer a question using the web, with sources.
+icon: "📚"
+
+connector: web-search
+allowed_tools: [brave_web_search]
+permission_tier: read_only
+
+instructions: >
+  Answer the user's question using only the provided web results. Be direct,
+  note uncertainty, and cite the source titles you relied on. If the results
+  don't answer it, say so.
+
+consumes:
+  - name: question
+    description: A question to research…
+
+provides:
+  - name: web.answer
+    description: An answer grounded in web sources.
