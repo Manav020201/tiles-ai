@@ -1,0 +1,21 @@
+# Summarize Folder — read_only. Works with zero credentials (local files).
+id: summarize-folder
+name: Summarize Folder
+description: Summarize what's in a folder.
+icon: "🗂️"
+
+connector: local-files
+allowed_tools: [list_dir, read_file]
+permission_tier: read_only
+
+instructions: >
+  Summarize what a folder contains: the kinds of files present and the key topics
+  from any text files. Be brief and concrete.
+
+consumes:
+  - name: folder
+    description: Folder path (blank = the connector's root)…
+
+provides:
+  - name: files.summary
+    description: A summary of a folder's contents.

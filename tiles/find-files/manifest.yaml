@@ -1,0 +1,20 @@
+# Find Files — read_only. Works with zero credentials (local files).
+id: find-files
+name: Find Files
+description: Find files by name.
+icon: "🔦"
+
+connector: local-files
+allowed_tools: [find_files]
+permission_tier: read_only
+
+instructions: >
+  List the matching file paths plainly.
+
+consumes:
+  - name: query
+    description: A filename or keyword to find…
+
+provides:
+  - name: files.matches
+    description: File paths matching a query.

@@ -120,3 +120,46 @@ def test_research_answers_with_sources():
     assert any(c[0] == "brave_web_search" for c in tools.calls)
     assert plan.result == "MODEL_REPLY"
     assert plan.actions == []
+
+
+# --- Local files (zero-credential "smart PC") ----------------------------
+
+
+def test_summarize_folder_reads_and_summarizes():
+    tools = FakeTools(
+        {
+            "list_dir": ToolResult(ok=True, output="a.txt\nb.md"),
+            "read_file": ToolResult(ok=True, output="contents"),
+        }
+    )
+    plan, _ = run_tile("summarize-folder", ".", tools=tools)
+    assert plan.result == "MODEL_REPLY"
+    assert any(c[0] == "read_file" for c in tools.calls)
+
+
+def test_find_files_returns_matches_without_the_model():
+    tools = FakeTools({"find_files": ToolResult(ok=True, output="notes/todo.txt")})
+    plan, _ = run_tile("find-files", "todo", tools=tools)
+    assert plan.result == "notes/todo.txt"
+
+
+def test_find_files_rejects_empty_query():
+    plan, _ = run_tile("find-files", "")
+    assert "keyword" in plan.result
+
+
+def test_tidy_folder_proposes_moves_grouped_by_type():
+    tools = FakeTools({"list_dir": ToolResult(ok=True, output="report.pdf\nphoto.png\nnotes")})
+    plan, _ = run_tile("tidy-folder", ".", tools=tools)
+    assert len(plan.actions) == 3
+    for action in plan.actions:
+        assert action.tool == "move_file" and action.side_effect is True
+    assert any(a.args["dst"] == "pdf/report.pdf" for a in plan.actions)
+    assert any(a.args["dst"] == "other/notes" for a in plan.actions)  # no extension
+
+
+def test_tidy_folder_nothing_to_do():
+    tools = FakeTools({"list_dir": ToolResult(ok=True, output="(empty)")})
+    plan, _ = run_tile("tidy-folder", ".", tools=tools)
+    assert plan.actions == []
+    assert "Nothing to tidy" in plan.result

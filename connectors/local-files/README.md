@@ -2,12 +2,19 @@
 
 A **real** connector — `kind: mcp` — not a mock. It launches the bundled
 [example MCP server](../../examples/mcp_servers/files_server.py) over stdio and
-exposes its read-only filesystem tools (`list_dir`, `read_file`), confined to
-`./sample_docs`.
+exposes filesystem tools, confined to `./sample_docs`:
+
+- `list_dir`, `read_file`, `find_files` — read-only
+- `move_file` — side-effectful (moves a file; gated behind approval)
 
 It's the proof of the project's core bet: a connector is a binding to an app's
 MCP server, and it satisfies the exact same `Connector` interface as the mock —
-so tiles binding it are unchanged.
+so tiles binding it are unchanged. Four tiles bind it:
+[Ask My Files](../../tiles/ask-my-files), [Summarize Folder](../../tiles/summarize-folder),
+[Find Files](../../tiles/find-files), and [Tidy Folder](../../tiles/tidy-folder).
+
+Point the `endpoint` at a real folder you care about (e.g. `~/Downloads`) and the
+tiles work on it.
 
 ## Point it elsewhere
 

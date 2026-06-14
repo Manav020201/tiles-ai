@@ -41,12 +41,15 @@ cd frontend && npm install && npm run dev  # board on http://localhost:5173
 Other commands: `tiles list` (show discovered tiles/connectors), `tiles new <id>`
 (scaffold a tile). See [docs/AUTHORING.md](docs/AUTHORING.md).
 
-**Starter board.** Five **instant** tiles work the moment a brain is connected —
-no app, no credentials: [Ask](tiles/ask), [Summarize](tiles/summarize),
+**Starter board — useful with zero credentials.** Five **instant** tiles work the
+moment a brain is connected: [Ask](tiles/ask), [Summarize](tiles/summarize),
 [Translate](tiles/translate), [Extract](tiles/extract),
-[Brainstorm](tiles/brainstorm). Two app tiles on a shared (mock) Gmail connector
-show the read vs. draft flow: [Inbox Summary](tiles/inbox-summary) (read_only) and
-[Reply Drafter](tiles/reply-drafter) (draft, queues for approval).
+[Brainstorm](tiles/brainstorm). A **local files** pack makes your own machine
+smart, no API keys: [Ask My Files](tiles/ask-my-files),
+[Summarize Folder](tiles/summarize-folder), [Find Files](tiles/find-files), and
+[Tidy Folder](tiles/tidy-folder) — which *proposes* sorting your files into
+folders and moves them only after you approve each one. (App packs like Gmail,
+GitHub, Slack, and Web Search add more once you provide a token.)
 
 API endpoints: `GET /api/tiles`, `POST /api/tiles/{id}/{activate,deactivate,run}`,
 `PUT /api/tiles/{id}/brain`, `GET /api/approvals`, `POST /api/approvals/{id}/resolve`,

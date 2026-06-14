@@ -55,6 +55,47 @@ def test_connector_lists_and_reads(tmp_path):
     assert read.side_effect is False  # manifest is the authority
 
 
+def _full_manifest(root: Path) -> ConnectorManifest:
+    return ConnectorManifest.model_validate(
+        {
+            "id": "local-files",
+            "app": "Local files",
+            "kind": "mcp",
+            "endpoint": f"{sys.executable} {SERVER} {root}",
+            "tools": [
+                {"name": "list_dir", "description": "l", "side_effect": False},
+                {"name": "read_file", "description": "r", "side_effect": False},
+                {"name": "find_files", "description": "f", "side_effect": False},
+                {"name": "move_file", "description": "m", "side_effect": True},
+            ],
+        }
+    )
+
+
+def test_find_files_and_move_file(tmp_path):
+    (tmp_path / "report.txt").write_text("hi", encoding="utf-8")
+    (tmp_path / "skip.log").write_text("x", encoding="utf-8")
+
+    async def go():
+        c = MCPConnector.from_manifest(_full_manifest(tmp_path))
+        await c.connect(AuthConfig())
+        try:
+            found = await c.call_tool("find_files", {"query": "report"}, _ctx())
+            moved = await c.call_tool(
+                "move_file", {"src": "report.txt", "dst": "txt/report.txt"}, _ctx()
+            )
+            return found, moved
+        finally:
+            await c.disconnect()
+
+    found, moved = asyncio.run(go())
+    assert found.ok and "report.txt" in found.output and "skip.log" not in found.output
+    assert moved.ok and moved.side_effect is True  # manifest declares it side-effectful
+    # The move actually happened on disk and created the parent dir.
+    assert (tmp_path / "txt" / "report.txt").is_file()
+    assert not (tmp_path / "report.txt").exists()
+
+
 def test_connector_refuses_path_traversal(tmp_path):
     async def go():
         c = MCPConnector.from_manifest(_manifest(tmp_path))
@@ -173,3 +214,52 @@ def test_runtime_reads_files_through_mcp_end_to_end():
     assert listing.ok and "project-notes.md" in listing.output
     assert outcome.result.startswith("[echo:")  # answered with the default brain
     assert not outcome.gate.queued and not outcome.gate.rejected
+
+
+@pytest.mark.skipif(shutil.which("python3") is None, reason="needs python3 on PATH")
+def test_tidy_folder_draft_loop_moves_files_on_approval(tmp_path):
+    # The full local "smart PC" draft loop: activate the Tidy Folder tile against a
+    # real MCP server, propose moves, approve them, and confirm files actually move
+    # on disk. Builds a temp board so we never mutate the repo's sample_docs.
+    board = tmp_path / "board"
+    shutil.copytree(REPO_ROOT / "connectors" / "local-files", board / "connectors" / "local-files")
+    shutil.copytree(REPO_ROOT / "tiles" / "tidy-folder", board / "tiles" / "tidy-folder")
+
+    content = tmp_path / "stuff"
+    content.mkdir()
+    (content / "a.txt").write_text("x", encoding="utf-8")
+    (content / "b.log").write_text("y", encoding="utf-8")
+
+    manifest = board / "connectors" / "local-files" / "manifest.yaml"
+    manifest.write_text(
+        manifest.read_text().replace(
+            "python3 examples/mcp_servers/files_server.py sample_docs",
+            f"{sys.executable} {SERVER} {content}",
+        ),
+        encoding="utf-8",
+    )
+
+    store = BrainStore()
+    store.add_provider(
+        HostedProvider(id="c", provider="anthropic", api_key="k", model="m"), make_default=True
+    )
+    reg = Registry.discover(board)
+    assert reg.ok, reg.report()
+    rt = Runtime(reg, ModelAdapter(store, client_factory=echo_client_factory))
+
+    async def go():
+        await rt.activate("tidy-folder")
+        try:
+            outcome = await rt.run("tidy-folder", ".")
+            assert len(outcome.gate.queued) == 2  # two files -> two proposed moves
+            assert not outcome.gate.executed  # draft tier: nothing fired yet
+            for item in list(rt.pending_approvals("tidy-folder")):
+                await rt.resolve_approval(item.id, True)
+        finally:
+            await rt.deactivate("tidy-folder")
+
+    asyncio.run(go())
+    # The approved moves actually happened, parent dirs created by type.
+    assert (content / "txt" / "a.txt").is_file()
+    assert (content / "log" / "b.log").is_file()
+    assert not (content / "a.txt").exists()

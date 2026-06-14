@@ -22,3 +22,9 @@ tools:
   - name: read_file
     description: Read a UTF-8 text file.
     side_effect: false
+  - name: find_files
+    description: Find files by name (recursive).
+    side_effect: false
+  - name: move_file
+    description: Move a file within the folder (creates parent dirs).
+    side_effect: true

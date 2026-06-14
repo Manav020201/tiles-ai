@@ -48,6 +48,26 @@ TOOLS = [
         "annotations": {"readOnlyHint": True},
     },
     {
+        "name": "find_files",
+        "description": "Find files whose name contains a query (recursive, relative to root).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"query": {"type": "string"}},
+            "required": ["query"],
+        },
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "move_file",
+        "description": "Move a file within the root (creates parent dirs as needed).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"src": {"type": "string"}, "dst": {"type": "string"}},
+            "required": ["src", "dst"],
+        },
+        "annotations": {"readOnlyHint": False, "destructiveHint": True},
+    },
+    {
         "name": "whoami",
         "description": "Return the FILES_USER env var (demonstrates env passthrough).",
         "inputSchema": {"type": "object", "properties": {}},
@@ -68,9 +88,7 @@ def _list_dir(path: str = ".") -> str:
     target = _safe(path)
     if not target.is_dir():
         raise ValueError(f"not a directory: {path}")
-    entries = sorted(
-        f"{p.name}/" if p.is_dir() else p.name for p in target.iterdir()
-    )
+    entries = sorted(f"{p.name}/" if p.is_dir() else p.name for p in target.iterdir())
     return "\n".join(entries) if entries else "(empty)"
 
 
@@ -82,11 +100,35 @@ def _read_file(path: str) -> str:
     return data.decode("utf-8", "replace")
 
 
+def _find_files(query: str) -> str:
+    q = (query or "").lower()
+    matches = [
+        str(p.relative_to(ROOT))
+        for p in sorted(ROOT.rglob("*"))
+        if p.is_file() and q in p.name.lower()
+    ]
+    return "\n".join(matches) if matches else "(no matches)"
+
+
+def _move_file(src: str, dst: str) -> str:
+    source = _safe(src)
+    dest = _safe(dst)
+    if not source.is_file():
+        raise ValueError(f"not a file: {src}")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    source.rename(dest)
+    return f"moved {src} -> {dst}"
+
+
 def _call_tool(name: str, args: dict) -> str:
     if name == "list_dir":
         return _list_dir(args.get("path", "."))
     if name == "read_file":
         return _read_file(args["path"])
+    if name == "find_files":
+        return _find_files(args["query"])
+    if name == "move_file":
+        return _move_file(args["src"], args["dst"])
     if name == "whoami":
         return os.environ.get("FILES_USER", "anonymous")
     raise ValueError(f"unknown tool '{name}'")

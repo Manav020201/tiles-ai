@@ -1,0 +1,22 @@
+# Tidy Folder — draft. The first LOCAL draft tile: proposes file moves you approve.
+id: tidy-folder
+name: Tidy Folder
+description: Sort files into subfolders by type (you approve each move).
+icon: "🧹"
+
+connector: local-files
+# Reads the listing, proposes move_file actions. Moves are side-effectful, so the
+# draft tier queues each one for your approval — nothing moves on its own.
+allowed_tools: [list_dir, move_file]
+permission_tier: draft
+
+instructions: >
+  Group a folder's files into subfolders named by their file type.
+
+consumes:
+  - name: folder
+    description: Folder path (blank = the connector's root)…
+
+provides:
+  - name: files.tidy_plan
+    description: A proposed set of file moves, pending approval.
