@@ -107,3 +107,15 @@ export interface LoadError {
   source: string;
   errors: string[];
 }
+
+export interface FlowStep {
+  tile_id: string;
+  result: unknown;
+  queued: number;
+  executed: number;
+  rejected: number;
+}
+
+export interface FlowRun {
+  steps: FlowStep[];
+}

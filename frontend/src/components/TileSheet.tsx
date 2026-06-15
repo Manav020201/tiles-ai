@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, ApiError } from "../api";
-import type { Provider, RunResponse, Tile, TilesEvent } from "../types";
+import type { FlowRun, Provider, RunResponse, Tile, TilesEvent } from "../types";
 import { renderResult } from "../lib/runResult";
+
+function prettify(id: string): string {
+  return id.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 const EVENT_LABEL: Record<string, string> = {
   "tile.activated": "activated",
@@ -35,6 +39,12 @@ export function TileSheet({
   onEdit: () => void;
 }) {
   const tileEvents = events.filter((e) => e.tile_id === tile.id).slice(0, 8);
+  const [feeds, setFeeds] = useState<string[]>([]);
+  const [flowRun, setFlowRun] = useState<FlowRun | null>(null);
+
+  useEffect(() => {
+    api.tileFlow(tile.id).then((f) => setFeeds(f.feeds)).catch(() => setFeeds([]));
+  }, [tile.id]);
   const [busy, setBusy] = useState(false);
   const [input, setInput] = useState("");
   const [lastRun, setLastRun] = useState<RunResponse | null>(null);
@@ -70,6 +80,19 @@ export function TileSheet({
     setError(null);
     try {
       setLastRun(await api.run(tile.id, tile.wants_input ? input : null));
+      onChanged();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runChain(consumerId: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      setFlowRun(await api.runFlow([tile.id, consumerId], tile.wants_input ? input : null));
       onChanged();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : String(e));
@@ -175,6 +198,36 @@ export function TileSheet({
             ))}
           </select>
         </div>
+
+        {feeds.length > 0 && (
+          <div className="chain">
+            <div className="result-label">Chain — run this, then feed it into:</div>
+            <div className="chain-btns">
+              {feeds.map((f) => (
+                <button
+                  key={f}
+                  className="btn chain-btn"
+                  onClick={() => runChain(f)}
+                  disabled={busy || (tile.wants_input && input.trim().length === 0)}
+                >
+                  → {prettify(f)}
+                </button>
+              ))}
+            </div>
+            {flowRun && (
+              <pre className="chain-result">
+                {flowRun.steps
+                  .map(
+                    (s) =>
+                      `${prettify(s.tile_id)}: ${
+                        typeof s.result === "string" ? s.result : JSON.stringify(s.result)
+                      }${s.queued ? ` (→ ${s.queued} queued)` : ""}`
+                  )
+                  .join("\n\n")}
+              </pre>
+            )}
+          </div>
+        )}
 
         {tileEvents.length > 0 && (
           <div className="tile-activity">

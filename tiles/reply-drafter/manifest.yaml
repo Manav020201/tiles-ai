@@ -22,3 +22,9 @@ instructions: >
 provides:
   - name: email.draft_reply
     description: A proposed reply, pending human approval.
+
+# Composition: this tile can run *after* a tile that provides email.summary
+# (e.g. Inbox Summary), receiving that summary as its input. See the flow API.
+consumes:
+  - name: email.summary
+    description: A summary of the inbox to base a reply on.

@@ -4,6 +4,7 @@ import type {
   Approval,
   Connector,
   ConnectorTool,
+  FlowRun,
   LoadError,
   NewConnector,
   NewTile,
@@ -39,6 +40,8 @@ export const api = {
   createTile: (body: NewTile) => http<Tile>("POST", "/api/tiles", body),
   updateTile: (id: string, body: Partial<NewTile>) => http<Tile>("PUT", `/api/tiles/${id}`, body),
   removeTile: (id: string) => http<{ deleted: string }>("DELETE", `/api/tiles/${id}`),
+  tileFlow: (id: string) => http<{ feeds: string[]; fed_by: string[] }>("GET", `/api/tiles/${id}/flow`),
+  runFlow: (tiles: string[], input: unknown) => http<FlowRun>("POST", "/api/flows/run", { tiles, input }),
   createConnector: (body: NewConnector) => http<Connector>("POST", "/api/connectors", body),
   updateConnector: (id: string, body: Partial<NewConnector>) =>
     http<Connector>("PUT", `/api/connectors/${id}`, body),

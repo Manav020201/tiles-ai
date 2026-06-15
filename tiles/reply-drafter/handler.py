@@ -18,11 +18,18 @@ class ReplyDrafter(Tile):
         messages = await context.tools.call("list_messages")
         inbox = messages.output or []
 
-        # Pick the message to reply to: the caller's input, else the first unread.
-        target = input or next((m for m in inbox if m.get("unread")), inbox[0] if inbox else {})
+        # Pick the message to reply to. `input` may be a message dict (direct use)
+        # or text — e.g. a summary piped from another tile via the flow API
+        # (consumes: email.summary). Either way, fall back to the first unread.
+        if isinstance(input, dict):
+            target = input
+            context_note = ""
+        else:
+            target = next((m for m in inbox if m.get("unread")), inbox[0] if inbox else {})
+            context_note = f"\n\nUse this context: {input}" if input else ""
 
         body = await context.model.complete(
-            f"Draft a short reply to this email: {target}",
+            f"Draft a short reply to this email: {target}{context_note}",
             system=context.manifest.instructions,
         )
 

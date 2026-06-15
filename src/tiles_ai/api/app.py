@@ -55,6 +55,10 @@ from .schemas import (
     CreateConnectorRequest,
     CreateTileRequest,
     ExecutedView,
+    FlowCandidatesView,
+    FlowRunRequest,
+    FlowRunResponse,
+    FlowStepView,
     IntrospectRequest,
     LoadErrorView,
     PinBrainRequest,
@@ -312,6 +316,33 @@ def create_app(
             raise HTTPException(400, str(exc)) from exc
         registry.rescan(root)
         return _tile_summary(tile_id)
+
+    @app.get("/api/tiles/{tile_id}/flow", response_model=FlowCandidatesView)
+    def tile_flow(tile_id: str) -> FlowCandidatesView:
+        if registry.get_tile(tile_id) is None:
+            raise HTTPException(404, f"no tile '{tile_id}'")
+        return FlowCandidatesView(**runtime.flow_candidates(tile_id))
+
+    @app.post("/api/flows/run", response_model=FlowRunResponse)
+    async def run_flow(body: FlowRunRequest) -> FlowRunResponse:
+        try:
+            outcomes = await runtime.run_flow(body.tiles, body.input)
+        except RuntimeError_ as exc:
+            raise HTTPException(404, str(exc)) from exc
+        except BrainResolutionError as exc:
+            raise HTTPException(409, str(exc)) from exc
+        return FlowRunResponse(
+            steps=[
+                FlowStepView(
+                    tile_id=o.tile_id,
+                    result=o.result,
+                    queued=len(o.gate.queued),
+                    executed=len(o.gate.executed),
+                    rejected=len(o.gate.rejected),
+                )
+                for o in outcomes
+            ]
+        )
 
     @app.delete("/api/tiles/{tile_id}")
     def remove_tile(tile_id: str) -> dict:

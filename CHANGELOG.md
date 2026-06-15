@@ -7,6 +7,11 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Multi-tile orchestration** (the `provides`/`consumes` seam). `Runtime.run_flow`
+  runs tiles in sequence, piping each result into the next's input;
+  `flow_candidates` matches `provides` ↔ `consumes`. `POST /api/flows/run` +
+  `GET /api/tiles/{id}/flow`; the tile sheet shows a **Chain** section to run a
+  tile, then feed it into a compatible one (e.g. Inbox Summary → Reply Drafter).
 - **HTTP MCP transport.** `MCPConnector` now speaks the Streamable HTTP transport
   to remote/hosted MCP servers (an `http(s)://` endpoint), in addition to local
   stdio subprocesses. The first declared `auth.env` var is sent as a bearer token.

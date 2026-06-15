@@ -76,6 +76,28 @@ class RunResponse(BaseModel):
     rejected: list[RejectedView]
 
 
+class FlowRunRequest(BaseModel):
+    tiles: list[str]  # run in order; each result feeds the next
+    input: Any = None
+
+
+class FlowStepView(BaseModel):
+    tile_id: str
+    result: Any
+    queued: int
+    executed: int
+    rejected: int
+
+
+class FlowRunResponse(BaseModel):
+    steps: list[FlowStepView]
+
+
+class FlowCandidatesView(BaseModel):
+    feeds: list[str]  # tiles this one can feed into (its provides ∩ their consumes)
+    fed_by: list[str]  # tiles that can feed this one
+
+
 class ApprovalView(BaseModel):
     id: str
     tile_id: str

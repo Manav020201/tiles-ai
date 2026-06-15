@@ -247,6 +247,52 @@ class Runtime:
         )
         return RunOutcome(tile_id=tile_id, result=plan.result, gate=gate_outcome)
 
+    # --- multi-tile orchestration (the provides/consumes seam) --------------
+
+    async def run_flow(self, tile_ids: list[str], input: Any = None) -> list[RunOutcome]:
+        """Run tiles in sequence, piping each tile's result into the next's input.
+
+        Each tile is activated if needed. This is the minimal composition: a
+        producer's output (`provides`) feeds a consumer (`consumes`). Returns one
+        RunOutcome per step.
+        """
+        if not tile_ids:
+            raise RuntimeError_("a flow needs at least one tile")
+        outcomes: list[RunOutcome] = []
+        current = input
+        for tile_id in tile_ids:
+            if not self.is_active(tile_id):
+                await self.activate(tile_id)
+            outcome = await self.run(tile_id, current)
+            outcomes.append(outcome)
+            current = outcome.result  # pipe forward
+        self._emit("flow.ran", tile_ids[0], tiles=tile_ids, steps=len(outcomes))
+        return outcomes
+
+    def flow_candidates(self, tile_id: str) -> dict[str, list[str]]:
+        """Which tiles this one can chain with, by matching provides ↔ consumes.
+
+        Returns `{"feeds": [...], "fed_by": [...]}`: tiles this one can feed into
+        (its `provides` ∩ their `consumes`), and tiles that can feed it (its
+        `consumes` ∩ their `provides`).
+        """
+        loaded = self.registry.get_tile(tile_id)
+        if loaded is None:
+            return {"feeds": [], "fed_by": []}
+        provides = {c.name for c in loaded.manifest.provides}
+        consumes = {c.name for c in loaded.manifest.consumes}
+        feeds, fed_by = [], []
+        for other_id, other in self.registry.tiles.items():
+            if other_id == tile_id:
+                continue
+            other_provides = {c.name for c in other.manifest.provides}
+            other_consumes = {c.name for c in other.manifest.consumes}
+            if provides & other_consumes:
+                feeds.append(other_id)
+            if consumes & other_provides:
+                fed_by.append(other_id)
+        return {"feeds": sorted(feeds), "fed_by": sorted(fed_by)}
+
     async def deactivate(self, tile_id: str) -> None:
         """Stop a tile: on_deactivate, disconnect, drop activation state."""
         active = self._active.pop(tile_id, None)
