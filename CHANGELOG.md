@@ -7,6 +7,14 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Model settings in the UI.** A 🧠 nav-bar button opens a "Brains" panel to add
+  a cloud LLM or a local (Ollama) model, set the default, test it, or remove it
+  (`DELETE /api/providers/{id}`) — any time, not just first-launch onboarding.
+- **Edit a tile from the board.** The tile sheet's "Edit tile" opens a form for
+  its manifest fields (name/icon/description/instructions/tier/input); the handler
+  stays in code. `scaffold.update_tile` + `PUT /api/tiles/{id}`.
+- **Hot reload.** `tiles up --reload` re-discovers on changes to `*.py` and
+  `*.yaml` under the board (WatchFiles), via an import-string app factory.
 - **Connect an app from the board.** A "🔌 New app" form takes an MCP server
   command, **introspects its tools live** (`POST /api/connectors/introspect` →
   `MCPConnector` → `live_tools`), and scaffolds the connector — which is then

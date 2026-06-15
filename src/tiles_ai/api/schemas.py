@@ -151,6 +151,16 @@ class LoadErrorView(BaseModel):
     errors: list[str]
 
 
+class UpdateTileRequest(BaseModel):
+    name: str | None = None
+    icon: str | None = None
+    description: str | None = None
+    instructions: str | None = None
+    permission_tier: str | None = None
+    wants_input: bool | None = None
+    input_hint: str | None = None
+
+
 class CreateTileRequest(BaseModel):
     name: str
     id: str | None = None  # derived from name if omitted

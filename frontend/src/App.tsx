@@ -8,6 +8,8 @@ import { Approvals } from "./components/Approvals";
 import { ActivityFeed } from "./components/ActivityFeed";
 import { NewTileForm } from "./components/NewTileForm";
 import { AddConnectorForm } from "./components/AddConnectorForm";
+import { EditTileForm } from "./components/EditTileForm";
+import { Settings } from "./components/Settings";
 import { Issues } from "./components/Issues";
 import { groupTiles } from "./lib/grouping";
 
@@ -18,8 +20,10 @@ export function App() {
   const [events, setEvents] = useState<TilesEvent[]>([]);
   const [errors, setErrors] = useState<LoadError[]>([]);
   const [openTileId, setOpenTileId] = useState<string | null>(null);
+  const [editingTileId, setEditingTileId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [addingApp, setAddingApp] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const refresh = useCallback(async () => {
     const [t, a, p, e] = await Promise.all([
@@ -96,12 +100,18 @@ export function App() {
           <button className="icon-btn" onClick={rescan} title="Re-scan tiles & connectors from disk">
             ⟳
           </button>
-          Brain:{" "}
-          {defaultProvider ? (
-            <span className="pill pill-brain">{defaultProvider.model}</span>
-          ) : (
-            <span className="pill pill-warn">no default</span>
-          )}
+          <button
+            className="brain-chip"
+            onClick={() => setShowSettings(true)}
+            title="Manage brains (models)"
+          >
+            🧠{" "}
+            {defaultProvider ? (
+              defaultProvider.model
+            ) : (
+              <span className="pill pill-warn">connect a brain</span>
+            )}
+          </button>
         </div>
       </header>
 
@@ -165,15 +175,33 @@ export function App() {
           providers={providers}
           onClose={() => setOpenTileId(null)}
           onChanged={refresh}
+          onEdit={() => {
+            setEditingTileId(openTile.id);
+            setOpenTileId(null);
+          }}
         />
       )}
 
-      {creating && (
-        <NewTileForm onClose={() => setCreating(false)} onCreated={refresh} />
+      {editingTileId && (
+        <EditTileForm
+          tileId={editingTileId}
+          onClose={() => setEditingTileId(null)}
+          onSaved={refresh}
+        />
       )}
+
+      {creating && <NewTileForm onClose={() => setCreating(false)} onCreated={refresh} />}
 
       {addingApp && (
         <AddConnectorForm onClose={() => setAddingApp(false)} onCreated={refresh} />
+      )}
+
+      {showSettings && (
+        <Settings
+          providers={providers}
+          onChanged={refresh}
+          onClose={() => setShowSettings(false)}
+        />
       )}
     </div>
   );

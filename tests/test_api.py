@@ -326,6 +326,45 @@ def test_reload_endpoint_picks_up_a_new_tile(tmp_path):
     assert "added-later" in after and "added-later" not in before
 
 
+def test_edit_tile_from_board(tmp_path):
+    client, _ = _tmp_client(tmp_path)
+    client.post("/api/tiles", json={"name": "Helper", "instructions": "old"})
+    resp = client.put(
+        "/api/tiles/helper",
+        json={"instructions": "new instructions", "permission_tier": "draft"},
+    )
+    assert resp.status_code == 200
+    detail = client.get("/api/tiles/helper").json()
+    assert detail["permission_tier"] == "draft"
+    assert detail["instructions"] == "new instructions"
+
+
+def test_edit_tile_rejects_invalid_tier(tmp_path):
+    client, _ = _tmp_client(tmp_path)
+    client.post("/api/tiles", json={"name": "Helper"})
+    assert client.put("/api/tiles/helper", json={"permission_tier": "nope"}).status_code == 400
+
+
+def test_remove_provider(tmp_path):
+    client, _ = _tmp_client(tmp_path)  # default "c"
+    client.post(
+        "/api/providers",
+        json={"provider": {"id": "extra", "kind": "local", "endpoint": "http://x", "model": "m"}},
+    )
+    after = client.delete("/api/providers/extra").json()
+    assert "extra" not in {p["id"] for p in after}
+    assert client.delete("/api/providers/ghost").status_code == 404
+
+
+def test_app_factory_builds_from_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("TILES_ECHO", "1")
+    monkeypatch.setenv("TILES_ROOT", str(tmp_path))
+    from tiles_ai.api.factory import make_app
+
+    app = make_app()
+    assert app.title == "Tiles AI"
+
+
 def test_events_endpoint_receives_activation_event():
     # Subscribe to the app's bus directly, then trigger an action over HTTP and
     # confirm the event was published (covers runtime->bus emission end to end

@@ -10,11 +10,13 @@ export function TileSheet({
   providers,
   onClose,
   onChanged,
+  onEdit,
 }: {
   tile: Tile;
   providers: Provider[];
   onClose: () => void;
   onChanged: () => void;
+  onEdit: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [input, setInput] = useState("");
@@ -157,9 +159,14 @@ export function TileSheet({
           </select>
         </div>
 
-        <button className="btn btn-plain btn-full" onClick={onClose}>
-          Done
-        </button>
+        <div className="sheet-foot">
+          <button className="btn btn-plain" onClick={onEdit}>
+            Edit tile
+          </button>
+          <button className="btn btn-plain" onClick={onClose}>
+            Done
+          </button>
+        </div>
       </div>
     </div>
   );

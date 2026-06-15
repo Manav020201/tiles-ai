@@ -106,6 +106,31 @@ button { font-family: inherit; }
 .icon-btn:hover { color: var(--text); }
 .icon-btn:active { transform: rotate(180deg); }
 
+.brain-chip {
+  background: var(--fill); border: none; color: var(--text);
+  border-radius: 999px; padding: 0.3rem 0.8rem; cursor: pointer;
+  font-size: 0.82rem; box-shadow: var(--inset-top);
+  display: inline-flex; align-items: center; gap: 0.35rem;
+}
+.brain-chip:hover { filter: brightness(1.1); }
+
+.brain-rows { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.4rem; }
+.row-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.btn-sm { padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+.settings-subhead { font-size: 0.95rem; font-weight: 700; margin: 1.2rem 0 0.6rem; }
+
+.seg {
+  display: flex; gap: 0.3rem; background: var(--fill-2); border-radius: 12px;
+  padding: 0.25rem; margin-bottom: 0.9rem;
+}
+.seg button {
+  flex: 1; border: none; background: none; color: var(--text-2);
+  padding: 0.5rem; border-radius: 9px; cursor: pointer; font-size: 0.88rem; font-weight: 600;
+}
+.seg .seg-on { background: var(--bg-3); color: var(--text); box-shadow: var(--sh-1); }
+
+.sheet-foot { display: flex; justify-content: space-between; margin-top: 0.4rem; }
+
 .panel-issues { border: 0.5px solid rgba(255, 159, 10, 0.3); }
 .issue-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
 .issue { background: var(--fill-2); border-radius: 12px; padding: 0.7rem 0.8rem; }

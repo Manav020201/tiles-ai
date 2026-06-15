@@ -1,6 +1,7 @@
 """Scaffolding new tiles — the shared logic behind `tiles new` and the board form."""
 
 import pytest
+import yaml
 
 from tiles_ai.registry import Registry
 from tiles_ai.scaffold import (
@@ -9,6 +10,7 @@ from tiles_ai.scaffold import (
     scaffold_connector,
     scaffold_tile,
     slugify,
+    update_tile,
 )
 
 
@@ -99,3 +101,27 @@ def test_scaffold_mock_connector_loads(tmp_path):
 def test_scaffold_connector_requires_endpoint_for_mcp(tmp_path):
     with pytest.raises(ScaffoldError, match="endpoint"):
         scaffold_connector(tmp_path, id="x", app="X", kind="mcp")
+
+
+def test_update_tile_changes_manifest_keeps_handler(tmp_path):
+    scaffold_tile(tmp_path, id="t", name="T", instructions="old")
+    handler_before = (tmp_path / "tiles" / "t" / "handler.py").read_text()
+
+    update_tile(tmp_path, "t", {"instructions": "new", "name": "T2", "permission_tier": "draft"})
+
+    data = yaml.safe_load((tmp_path / "tiles" / "t" / "manifest.yaml").read_text())
+    assert data["instructions"] == "new" and data["name"] == "T2"
+    assert data["permission_tier"] == "draft"
+    assert (tmp_path / "tiles" / "t" / "handler.py").read_text() == handler_before  # untouched
+    assert Registry.discover(tmp_path).ok
+
+
+def test_update_tile_rejects_invalid(tmp_path):
+    scaffold_tile(tmp_path, id="t", name="T")
+    with pytest.raises(ScaffoldError):
+        update_tile(tmp_path, "t", {"permission_tier": "nope"})
+
+
+def test_update_tile_missing(tmp_path):
+    with pytest.raises(ScaffoldError, match="no tile"):
+        update_tile(tmp_path, "ghost", {"name": "X"})

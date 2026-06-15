@@ -25,6 +25,7 @@ dependencies = [
     "pyyaml>=6.0",
     "fastapi>=0.110",
     "uvicorn>=0.27",
+    "watchfiles>=0.21",  # enables `tiles up --reload` to watch *.yaml manifests too
 ]
 
 [project.optional-dependencies]

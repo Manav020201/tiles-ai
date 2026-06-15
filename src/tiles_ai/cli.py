@@ -30,6 +30,9 @@ def main(argv: list[str] | None = None) -> int:
     up.add_argument("--port", type=int, default=8000)
     up.add_argument("--brain", default="brain.local.yaml", help="Brain store file.")
     up.add_argument("--echo", action="store_true", help="Use an offline demo brain (no keys).")
+    up.add_argument(
+        "--reload", action="store_true", help="Hot-reload on changes to tiles/connectors."
+    )
     up.set_defaults(func=_up)
 
     ls = sub.add_parser("list", help="List discovered connectors and tiles.")
@@ -53,7 +56,31 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _up(args) -> int:
+    import os
+
     import uvicorn
+
+    print(f"Tiles AI on http://{args.host}:{args.port}")
+    if args.echo:
+        print("Running with an offline demo brain (echo). No keys, no network.")
+
+    if args.reload:
+        # The reloader re-imports the app, so it needs an import-string factory
+        # configured via env. It watches the board for *.py and *.yaml changes.
+        os.environ["TILES_ROOT"] = args.root
+        os.environ["TILES_BRAIN"] = args.brain
+        if args.echo:
+            os.environ["TILES_ECHO"] = "1"
+        uvicorn.run(
+            "tiles_ai.api.factory:make_app",
+            factory=True,
+            host=args.host,
+            port=args.port,
+            reload=True,
+            reload_dirs=[os.path.abspath(args.root)],
+            reload_includes=["*.py", "*.yaml", "*.yml"],
+        )
+        return 0
 
     from .api import create_app
     from .model import BrainStore
@@ -74,11 +101,9 @@ def _up(args) -> int:
             brain_store=store,
             model_adapter=ModelAdapter(store, client_factory=echo_client_factory),
         )
-        print("Running with an offline demo brain (echo). No keys, no network.")
     else:
         app = create_app(root=args.root, brain_store=BrainStore.load(args.brain))
 
-    print(f"Tiles AI on http://{args.host}:{args.port}")
     uvicorn.run(app, host=args.host, port=args.port)
     return 0
 

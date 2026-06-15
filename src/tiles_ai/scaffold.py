@@ -13,7 +13,11 @@ from pathlib import Path
 
 import yaml
 
-from .contracts import ConnectorManifest, TileManifest
+from .contracts import (
+    ConnectorManifest,
+    TileManifest,
+    validate_tile_against_connector,
+)
 from .contracts.ids import SLUG_PATTERN
 
 
@@ -97,6 +101,53 @@ def _handler_source(manifest: dict) -> str:
         "        )\n"
         "        return ActionPlan(result=answer)\n"
     )
+
+
+def update_tile(
+    root: str | Path,
+    tile_id: str,
+    changes: dict,
+    connector_manifest: ConnectorManifest | None = None,
+) -> Path:
+    """Update a tile's manifest fields in place, keeping its handler.py.
+
+    Only the declarative fields are editable from the board (name, icon,
+    description, instructions, permission_tier, wants_input/input_hint) — the
+    handler's logic stays in code. Validates schema + (if bound) the connector
+    before writing; raises ScaffoldError otherwise.
+    """
+    folder = Path(root) / "tiles" / tile_id
+    mpath = folder / "manifest.yaml"
+    if not mpath.exists():
+        raise ScaffoldError(f"no tile '{tile_id}'.")
+
+    data = yaml.safe_load(mpath.read_text(encoding="utf-8")) or {}
+    for key in ("name", "icon", "description", "instructions", "permission_tier"):
+        if changes.get(key) is not None:
+            data[key] = changes[key]
+    if changes.get("wants_input") is not None:
+        if changes["wants_input"]:
+            existing = (data.get("consumes") or [{}])[0].get("description")
+            data["consumes"] = [
+                {
+                    "name": "input",
+                    "description": changes.get("input_hint") or existing or "Type here…",
+                }
+            ]
+        else:
+            data.pop("consumes", None)
+
+    try:
+        manifest = TileManifest.model_validate(data)
+    except Exception as exc:
+        raise ScaffoldError(f"invalid tile: {exc}") from exc
+    if connector_manifest is not None:
+        errors = validate_tile_against_connector(manifest, connector_manifest)
+        if errors:
+            raise ScaffoldError("; ".join(errors))
+
+    mpath.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    return folder
 
 
 def scaffold_connector(

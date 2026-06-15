@@ -37,6 +37,7 @@ export const api = {
   getTile: (id: string) => http<TileDetail>("GET", `/api/tiles/${id}`),
   listConnectors: () => http<Connector[]>("GET", "/api/connectors"),
   createTile: (body: NewTile) => http<Tile>("POST", "/api/tiles", body),
+  updateTile: (id: string, body: Partial<NewTile>) => http<Tile>("PUT", `/api/tiles/${id}`, body),
   createConnector: (body: NewConnector) => http<Connector>("POST", "/api/connectors", body),
   introspectConnector: (endpoint: string, env: string[]) =>
     http<ConnectorTool[]>("POST", "/api/connectors/introspect", { endpoint, env }),
@@ -59,4 +60,5 @@ export const api = {
   setDefault: (providerId: string) =>
     http<Provider[]>("PUT", "/api/brain/default", { provider_id: providerId }),
   testProvider: (id: string) => http<{ ok: boolean; detail: string }>("POST", `/api/providers/${id}/test`),
+  removeProvider: (id: string) => http<Provider[]>("DELETE", `/api/providers/${id}`),
 };

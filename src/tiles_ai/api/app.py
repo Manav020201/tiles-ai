@@ -41,6 +41,7 @@ from ..scaffold import (
     scaffold_connector,
     scaffold_tile,
     slugify,
+    update_tile,
 )
 from .schemas import (
     AddProviderRequest,
@@ -64,6 +65,7 @@ from .schemas import (
     TestResponse,
     TileDetail,
     TileSummary,
+    UpdateTileRequest,
 )
 
 
@@ -262,6 +264,22 @@ def create_app(
         registry.rescan(root)  # the new tile now shows on the board
         return _tile_summary(tile_id)
 
+    @app.put("/api/tiles/{tile_id}", response_model=TileSummary)
+    def edit_tile(tile_id: str, body: UpdateTileRequest) -> TileSummary:
+        loaded = registry.get_tile(tile_id)
+        if loaded is None:
+            raise HTTPException(404, f"no tile '{tile_id}'")
+        cm = None
+        if loaded.manifest.connector:
+            lc = registry.get_connector(loaded.manifest.connector)
+            cm = lc.manifest if lc else None
+        try:
+            update_tile(root, tile_id, body.model_dump(), cm)
+        except ScaffoldError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        registry.rescan(root)
+        return _tile_summary(tile_id)
+
     @app.get("/api/tiles/{tile_id}", response_model=TileDetail)
     def get_tile(tile_id: str) -> TileDetail:
         summary = _tile_summary(tile_id)
@@ -366,6 +384,13 @@ def create_app(
         if store.config.get(body.provider_id) is None:
             raise HTTPException(404, f"no provider '{body.provider_id}'")
         store.set_default(body.provider_id)
+        return [_provider_view(p) for p in store.config.providers]
+
+    @app.delete("/api/providers/{provider_id}", response_model=list[ProviderView])
+    def remove_provider(provider_id: str) -> list[ProviderView]:
+        if store.config.get(provider_id) is None:
+            raise HTTPException(404, f"no provider '{provider_id}'")
+        store.remove_provider(provider_id)
         return [_provider_view(p) for p in store.config.providers]
 
     @app.post("/api/providers/{provider_id}/test", response_model=TestResponse)
