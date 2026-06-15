@@ -48,6 +48,10 @@ export const api = {
   removeConnector: (id: string) => http<{ deleted: string }>("DELETE", `/api/connectors/${id}`),
   oauthStart: (id: string) => http<{ authorize_url: string }>("GET", `/api/connectors/${id}/oauth/start`),
   oauthDisconnect: (id: string) => http<Connector>("POST", `/api/connectors/${id}/oauth/disconnect`),
+  setConnectorSecrets: (id: string, values: Record<string, string>) =>
+    http<Connector>("PUT", `/api/connectors/${id}/secrets`, { values }),
+  clearConnectorSecret: (id: string, name: string) =>
+    http<Connector>("DELETE", `/api/connectors/${id}/secrets/${name}`),
   introspectConnector: (endpoint: string, env: string[]) =>
     http<ConnectorTool[]>("POST", "/api/connectors/introspect", { endpoint, env }),
 

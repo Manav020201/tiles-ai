@@ -47,6 +47,7 @@ export function TileSheet({
   }, [tile.id]);
   const [busy, setBusy] = useState(false);
   const [input, setInput] = useState("");
+  const [keys, setKeys] = useState<Record<string, string>>({});
   const [lastRun, setLastRun] = useState<RunResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,6 +102,23 @@ export function TileSheet({
     }
   }
 
+  async function saveKeys() {
+    if (!tile.connector) return;
+    const values = Object.fromEntries(Object.entries(keys).filter(([, v]) => v.trim()));
+    if (Object.keys(values).length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.setConnectorSecrets(tile.connector, values);
+      setKeys({});
+      onChanged();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const pinnedId = tile.uses_default_brain
     ? ""
     : providers.find((p) => p.model === tile.brain?.model)?.id ?? "";
@@ -134,7 +152,21 @@ export function TileSheet({
 
         {blocked && (
           <div className="notice">
-            Set {tile.missing_env.join(", ")} in your environment to enable this tile.
+            <div>This tile needs an API key to run:</div>
+            {tile.missing_env.map((name) => (
+              <input
+                key={name}
+                type="password"
+                autoComplete="off"
+                className="key-input"
+                placeholder={`paste ${name}`}
+                value={keys[name] ?? ""}
+                onChange={(e) => setKeys((k) => ({ ...k, [name]: e.target.value }))}
+              />
+            ))}
+            <button className="btn btn-full" onClick={saveKeys} disabled={busy}>
+              {busy ? "Saving…" : "Save key"}
+            </button>
           </div>
         )}
 

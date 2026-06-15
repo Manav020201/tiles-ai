@@ -6,15 +6,19 @@ A real `kind: mcp` connector over
 ## Setup
 
 1. Get a Brave Search API key (https://brave.com/search/api/).
-2. Export it before starting Tiles AI:
+2. `npx` must be available (Node 18+).
+3. Add the key. **Easiest — from the board:** open a Web Search tile (or 🔌 → ⚙
+   on the connector) and paste `BRAVE_API_KEY`. It's saved locally in
+   `secrets.local.yaml` (gitignored) and applied to the server's environment.
+
+   Or export it before starting Tiles AI:
    ```bash
    export BRAVE_API_KEY=...
    tiles up
    ```
-3. `npx` must be available.
 
 Until the key is set, tiles bound here show **needs token** and won't activate.
-The key passes through to the server and is never stored by Tiles AI.
+The key passes through to the launched server and never leaves your machine.
 
 ## Tiles
 

@@ -18,6 +18,7 @@ export function EditConnectorForm({
   const [endpoint, setEndpoint] = useState("");
   const [envText, setEnvText] = useState("");
   const [tools, setTools] = useState<ConnectorTool[]>([]);
+  const [keys, setKeys] = useState<Record<string, string>>({});
   const [fetching, setFetching] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +55,38 @@ export function EditConnectorForm({
       onChanged();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : String(e));
+    }
+  }
+
+  async function saveKeys() {
+    const values = Object.fromEntries(
+      Object.entries(keys).filter(([, v]) => v.trim()),
+    );
+    if (Object.keys(values).length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await api.setConnectorSecrets(connectorId, values);
+      setConn(updated);
+      setKeys({});
+      onChanged();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function clearKey(name: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      setConn(await api.clearConnectorSecret(connectorId, name));
+      onChanged();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -138,6 +171,42 @@ export function EditConnectorForm({
                 </button>
               )}
             </div>
+          </div>
+        )}
+
+        {conn && (conn.env?.length ?? 0) > 0 && (
+          <div className="field" style={{ marginTop: "0.8rem" }}>
+            <span>API keys — stored locally, never committed</span>
+            {conn.env!.map((name) => {
+              const isSet = !(conn.missing_env ?? []).includes(name);
+              return (
+                <div key={name} className="row">
+                  <div style={{ flex: 1 }}>
+                    <div className="row-label">{name}</div>
+                    <div className="row-sub">
+                      {isSet ? <span className="test-ok">✓ set</span> : "not set"}
+                    </div>
+                    <input
+                      type="password"
+                      autoComplete="off"
+                      placeholder={isSet ? "enter a new value to replace" : "paste key"}
+                      value={keys[name] ?? ""}
+                      onChange={(e) => setKeys((k) => ({ ...k, [name]: e.target.value }))}
+                    />
+                  </div>
+                  {isSet && (
+                    <div className="row-actions">
+                      <button className="btn btn-sm btn-reject" onClick={() => clearKey(name)} disabled={busy}>
+                        Clear
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <button className="btn btn-full" onClick={saveKeys} disabled={busy}>
+              Save keys
+            </button>
           </div>
         )}
 

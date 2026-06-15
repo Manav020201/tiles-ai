@@ -58,6 +58,19 @@ All notable changes to this project are documented here. The format follows
   each move queued for your approval). The first *local* side-effect flow, tested
   end to end (propose → approve → files move on disk).
 
+## [0.1.4] - 2026-06-15
+
+### Added
+- **Enter connector API keys from the board — no shell exports.** Tiles whose
+  connector needs a key (e.g. `BRAVE_API_KEY` for Web Search) now show a password
+  field right in the tile sheet ("This tile needs an API key to run"); the
+  connector's edit form (🔌 → ⚙) gains an **API keys** section to set or clear
+  each one. Keys are saved to `secrets.local.yaml` (gitignored) and applied to
+  the process environment so the launched MCP server sees them. New
+  `PUT`/`DELETE /api/connectors/{id}/secrets`; `ConnectorView.missing_env`
+  reports which declared env vars still need a value. Values are never returned
+  by the API.
+
 ## [0.1.3] - 2026-06-15
 
 ### Added

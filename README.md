@@ -62,8 +62,9 @@ tiles up --echo
   the moves; you approve them).
 
 **Add your apps** — GitHub, Slack, web search, Gmail, and anything with an
-[MCP](https://modelcontextprotocol.io) server (local or remote), via an API token
-or OAuth.
+[MCP](https://modelcontextprotocol.io) server (local or remote). Paste any API
+key the app needs **right in the board** (stored locally in `secrets.local.yaml`,
+gitignored), or connect via OAuth.
 
 **All from the board — no editor required:**
 

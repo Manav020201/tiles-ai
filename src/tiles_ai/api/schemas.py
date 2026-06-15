@@ -152,10 +152,17 @@ class ConnectorView(BaseModel):
     app: str
     kind: str
     endpoint: str | None = None
-    env: list[str] = []
+    env: list[str] = []  # env var names this connector needs
+    missing_env: list[str] = []  # of those, the ones with no value set yet
     oauth: bool = False  # the connector declares an OAuth flow
     authorized: bool = False  # a token has been stored
     tools: list[ConnectorToolView]
+
+
+class SetSecretsRequest(BaseModel):
+    # Map of env var name -> value (e.g. {"BRAVE_API_KEY": "..."}). Stored locally
+    # in secrets.local.yaml and applied to the process env; never echoed back.
+    values: dict[str, str]
 
 
 class CreateConnectorRequest(BaseModel):

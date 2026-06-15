@@ -488,6 +488,8 @@ button { font-family: inherit; }
 .result pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: inherit; font-size: 0.9rem; line-height: 1.5; }
 
 .notice { color: var(--orange); font-size: 0.85rem; background: rgba(255, 159, 10, 0.1); border: 0.5px solid rgba(255, 159, 10, 0.2); padding: 0.7rem 0.9rem; border-radius: 12px; margin-bottom: 0.8rem; }
+.key-input { width: 100%; box-sizing: border-box; margin-top: 0.5rem; padding: 0.5rem 0.7rem; border-radius: 10px; border: 0.5px solid var(--hairline); background: var(--surface); color: var(--text); font-size: 0.85rem; }
+.key-input:focus { outline: 2px solid var(--blue); border-color: transparent; }
 .error-text { color: var(--red); font-size: 0.85rem; margin-top: 0.6rem; }
 
 .select {

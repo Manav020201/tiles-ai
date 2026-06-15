@@ -1,5 +1,6 @@
 """API integration tests over the real board, with an offline (echo) brain."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -206,6 +207,41 @@ def test_brain_changes_persist_to_disk(tmp_path):
     reloaded = BrainStore.load(brain_file)
     assert reloaded.config.default_provider == "cloud"
     assert reloaded.config.get("cloud").api_key == "sk-real"
+
+
+def test_connector_secrets_set_from_the_board(tmp_path, monkeypatch):
+    # Entering a connector API key in the UI persists it (temp board, not the
+    # repo) and clears the connector's "needs token" state.
+    monkeypatch.delenv("TILES_TEST_BRAVE_KEY", raising=False)
+    conn = tmp_path / "connectors" / "demo"
+    conn.mkdir(parents=True)
+    (conn / "manifest.yaml").write_text(
+        "id: demo\napp: Demo\nkind: mock\n"
+        "auth:\n  scheme: api_key\n  env: [TILES_TEST_BRAVE_KEY]\n"
+        "tools:\n  - {name: ping, description: p, side_effect: false}\n"
+    )
+    (conn / "adapter.py").write_text(
+        "from tiles_ai.connectors import MockConnector\n\n\nclass Demo(MockConnector):\n    pass\n"
+    )
+    client = TestClient(create_app(root=tmp_path, brain_store=BrainStore()))
+
+    before = next(c for c in client.get("/api/connectors").json() if c["id"] == "demo")
+    assert before["missing_env"] == ["TILES_TEST_BRAVE_KEY"]
+
+    updated = client.put(
+        "/api/connectors/demo/secrets",
+        json={"values": {"TILES_TEST_BRAVE_KEY": "sk-brave"}},
+    ).json()
+    assert updated["missing_env"] == []
+    assert os.environ["TILES_TEST_BRAVE_KEY"] == "sk-brave"
+    assert (tmp_path / "secrets.local.yaml").exists()  # written to the board, not the repo
+
+    # An env var the connector doesn't declare is rejected.
+    assert client.put("/api/connectors/demo/secrets", json={"values": {"NOPE": "x"}}).status_code == 400
+
+    cleared = client.delete("/api/connectors/demo/secrets/TILES_TEST_BRAVE_KEY").json()
+    assert cleared["missing_env"] == ["TILES_TEST_BRAVE_KEY"]
+    monkeypatch.delenv("TILES_TEST_BRAVE_KEY", raising=False)
 
 
 def test_pin_brain_override():

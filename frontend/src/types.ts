@@ -80,6 +80,7 @@ export interface Connector {
   kind: string;
   endpoint?: string | null;
   env?: string[];
+  missing_env?: string[];
   oauth?: boolean;
   authorized?: boolean;
   tools: ConnectorTool[];

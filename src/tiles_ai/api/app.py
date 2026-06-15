@@ -49,6 +49,7 @@ from ..scaffold import (
     update_connector,
     update_tile,
 )
+from ..secrets import SecretStore
 from .schemas import (
     AddProviderRequest,
     ApprovalView,
@@ -73,6 +74,7 @@ from .schemas import (
     RunResponse,
     ScheduledTileView,
     SetDefaultRequest,
+    SetSecretsRequest,
     TestResponse,
     TileDetail,
     TileSummary,
@@ -93,6 +95,10 @@ def create_app(
     store = brain_store or BrainStore()
     adapter = model_adapter or ModelAdapter(store)
     tokens = token_store or TokenStore.load(root / "oauth.local.yaml")
+    # Connector API keys entered from the board, applied to the process env so
+    # launched MCP servers see them. (Named to avoid the stdlib `secrets` import.)
+    secret_store = SecretStore.load(root / "secrets.local.yaml")
+    secret_store.apply_to_env()
     bus = EventBus()
     runtime = Runtime(registry, adapter, events=bus, token_store=tokens)
     scheduler = Scheduler(runtime)
@@ -202,6 +208,7 @@ def create_app(
             kind=m.kind.value,
             endpoint=m.endpoint,
             env=m.auth.env,
+            missing_env=[e for e in m.auth.env if not os.environ.get(e)],
             oauth=m.auth.oauth is not None,
             authorized=tokens.is_authorized(cid),
             tools=[
@@ -272,6 +279,30 @@ def create_app(
         delete_connector(root, connector_id)
         registry.rescan(root)
         return {"deleted": connector_id}
+
+    @app.put("/api/connectors/{connector_id}/secrets", response_model=ConnectorView)
+    def set_connector_secrets(connector_id: str, body: SetSecretsRequest) -> ConnectorView:
+        lc = registry.get_connector(connector_id)
+        if lc is None:
+            raise HTTPException(404, f"no connector '{connector_id}'")
+        allowed = set(lc.manifest.auth.env)
+        unknown = [name for name in body.values if name not in allowed]
+        if unknown:
+            raise HTTPException(400, f"connector '{connector_id}' has no env var(s) {unknown}")
+        for name, value in body.values.items():
+            if value.strip():
+                secret_store.set(name, value.strip())
+        return _connector_view(connector_id)
+
+    @app.delete("/api/connectors/{connector_id}/secrets/{name}", response_model=ConnectorView)
+    def clear_connector_secret(connector_id: str, name: str) -> ConnectorView:
+        lc = registry.get_connector(connector_id)
+        if lc is None:
+            raise HTTPException(404, f"no connector '{connector_id}'")
+        if name not in set(lc.manifest.auth.env):
+            raise HTTPException(400, f"connector '{connector_id}' has no env var '{name}'")
+        secret_store.remove(name)
+        return _connector_view(connector_id)
 
     # --- OAuth (authorization-code) ----------------------------------------
 
