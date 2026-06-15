@@ -21,9 +21,11 @@ API keys are fine; frictionless authoring is the priority.
 ## Repo & deploy
 
 - GitHub: **https://github.com/Manav020201/tiles-ai** (public, `main`).
-- PyPI name: `tiles-ai` (v0.1.0; not yet published — needs Trusted Publishing
-  setup + a `pypi` GitHub environment, then tag `v0.1.0`). See
-  [`RELEASING.md`](RELEASING.md).
+- PyPI: **`tiles-ai` v0.1.0 published** (https://pypi.org/project/tiles-ai/) via
+  Trusted Publishing (OIDC, `pypi` GitHub environment) — `pipx install tiles-ai`.
+  Release is tag-driven (`.github/workflows/release.yml`, on `v*`); the wheel
+  bundles the pre-built board. Next release: bump `version` in `pyproject.toml`,
+  tag `vX.Y.Z`, push. See [`RELEASING.md`](RELEASING.md).
 - Owner email: manavsinghai11@gmail.com. Author in pyproject: "Manav Singhai".
 - Push needs a PAT with the **`workflow`** scope (creating `.github/workflows`).
 

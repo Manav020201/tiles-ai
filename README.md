@@ -26,12 +26,10 @@ board and add your own tiles right from the screen.
 
 ## Quick start
 
-You'll need **Python 3.11+** and **Node 18+** (to build the board once).
+You'll need **Python 3.11+**. The board ships pre-built in the package:
 
 ```bash
-git clone https://github.com/Manav020201/tiles-ai && cd tiles-ai
-pip install -e ".[dev]"
-npm --prefix frontend install && npm --prefix frontend run build
+pipx install tiles-ai      # or: pip install tiles-ai
 tiles up --echo
 ```
 
@@ -39,7 +37,18 @@ Open **http://127.0.0.1:8000** — you'll see a starter board running on a free
 offline brain (no API key needed). When you're ready for a real model, run
 `tiles up` and connect a brain from the screen.
 
-> _PyPI packaging is ready; once published this becomes `pipx install tiles-ai && tiles up`._
+<details>
+<summary>From source (to hack on Tiles itself)</summary>
+
+You'll also need **Node 18+** to build the board once.
+
+```bash
+git clone https://github.com/Manav020201/tiles-ai && cd tiles-ai
+pip install -e ".[dev]"
+npm --prefix frontend install && npm --prefix frontend run build
+tiles up --echo
+```
+</details>
 
 ## What you can do
 
