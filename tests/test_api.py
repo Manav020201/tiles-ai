@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from tiles_ai.api import create_app
 from tiles_ai.contracts import HostedProvider
-from tiles_ai.model import BrainStore, ModelAdapter, echo_client_factory
+from tiles_ai.model import BrainStore, ModelAdapter, Usage, echo_client_factory
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SERVER = REPO_ROOT / "examples" / "mcp_servers" / "files_server.py"
@@ -102,6 +102,37 @@ def test_draft_rejection_does_not_execute():
     resolved = client.post(f"/api/approvals/{approval_id}/resolve", json={"approved": False}).json()
     assert resolved["status"] == "rejected"
     assert resolved["output"] is None
+
+
+def test_token_usage_is_metered_per_run_and_session():
+    class _Client:
+        last_usage = None
+
+        async def complete(self, prompt, *, system=None):
+            self.last_usage = Usage(10, 5)
+            return "hi"
+
+    store = BrainStore()
+    store.add_provider(
+        HostedProvider(id="cloud", provider="anthropic", api_key="k", model="claude-opus-4-8"),
+        make_default=True,
+    )
+    app = create_app(
+        root=REPO_ROOT,
+        brain_store=store,
+        model_adapter=ModelAdapter(store, client_factory=lambda r, c: _Client()),
+    )
+    client = TestClient(app)
+    client.post("/api/tiles/ask/activate")
+
+    run = client.post("/api/tiles/ask/run", json={"input": "hi"}).json()
+    assert run["usage"] == {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15}
+
+    # A second run accumulates into the session total + per-model breakdown.
+    client.post("/api/tiles/ask/run", json={"input": "again"})
+    usage = client.get("/api/usage").json()
+    assert usage["total_tokens"] == 30
+    assert usage["by_model"]["anthropic/claude-opus-4-8"]["total_tokens"] == 30
 
 
 def test_run_before_activate_is_409():

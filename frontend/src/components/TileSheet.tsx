@@ -208,7 +208,16 @@ export function TileSheet({
 
         {lastRun && (
           <div className="result">
-            <div className="result-label">Last run</div>
+            <div className="result-label">
+              Last run
+              {lastRun.usage && lastRun.usage.total_tokens > 0 && (
+                <span className="token-tag">
+                  🔥 {lastRun.usage.total_tokens.toLocaleString()} tokens (
+                  {lastRun.usage.input_tokens.toLocaleString()} in /{" "}
+                  {lastRun.usage.output_tokens.toLocaleString()} out)
+                </span>
+              )}
+            </div>
             <pre>{renderResult(lastRun)}</pre>
           </div>
         )}

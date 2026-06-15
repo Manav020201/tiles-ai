@@ -34,7 +34,7 @@ from ..contracts import (
     transition,
 )
 from ..events import Event, EventBus
-from ..model import ModelAdapter
+from ..model import ModelAdapter, Usage
 from ..oauth import OAuthError, refresh_token
 from ..registry import Registry
 from .gate import GateOutcome, PermissionGate
@@ -61,6 +61,7 @@ class RunOutcome:
     tile_id: str
     result: Any
     gate: GateOutcome
+    usage: Usage | None = None  # tokens this run consumed (None if not measured)
 
 
 class RuntimeError_(Exception):
@@ -249,7 +250,13 @@ class Runtime:
         if active is None:
             raise RuntimeError_(f"tile '{tile_id}' is not active; activate it first")
 
+        before = self.model.meter.total
         plan: ActionPlan = await active.handler.run(input, active.context)
+        after = self.model.meter.total
+        run_usage = Usage(
+            after.input_tokens - before.input_tokens,
+            after.output_tokens - before.output_tokens,
+        )
         gate_outcome = await self.gate.process(
             tile_id=tile_id,
             tier=active.manifest.permission_tier,
@@ -277,7 +284,17 @@ class Runtime:
             queued=len(gate_outcome.queued),
             rejected=len(gate_outcome.rejected),
         )
-        return RunOutcome(tile_id=tile_id, result=plan.result, gate=gate_outcome)
+        # Token usage: this run's tokens + the running session total, so the board
+        # can show a live "token burn" counter.
+        self._emit(
+            "usage",
+            tile_id,
+            input_tokens=run_usage.input_tokens,
+            output_tokens=run_usage.output_tokens,
+            run_total=run_usage.total,
+            session_total=self.model.meter.total.total,
+        )
+        return RunOutcome(tile_id=tile_id, result=plan.result, gate=gate_outcome, usage=run_usage)
 
     # --- multi-tile orchestration (the provides/consumes seam) --------------
 

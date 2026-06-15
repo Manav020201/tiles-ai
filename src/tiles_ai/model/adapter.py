@@ -32,11 +32,41 @@ from .clients import (
     ModelClientError,
     OllamaClient,
     OpenAIClient,
+    Usage,
 )
 from .store import BrainStore
 
 # Given a resolved brain + the full config (for credentials), build a client.
 ClientFactory = Callable[[ResolvedBrain, BrainConfig], ModelClient]
+
+
+class UsageMeter:
+    """Accumulates token usage for the session: a grand total + a per-model
+    breakdown. In-memory; resets when the process restarts."""
+
+    def __init__(self) -> None:
+        self.total = Usage()
+        self.by_model: dict[str, Usage] = {}
+        self.runs = 0
+
+    def add(self, model_key: str, usage: Usage) -> None:
+        self.total = self.total + usage
+        self.by_model[model_key] = self.by_model.get(model_key, Usage()) + usage
+
+    def snapshot(self) -> dict:
+        return {
+            "input_tokens": self.total.input_tokens,
+            "output_tokens": self.total.output_tokens,
+            "total_tokens": self.total.total,
+            "by_model": {
+                k: {
+                    "input_tokens": u.input_tokens,
+                    "output_tokens": u.output_tokens,
+                    "total_tokens": u.total,
+                }
+                for k, u in sorted(self.by_model.items())
+            },
+        }
 
 
 def default_client_factory(resolved: ResolvedBrain, config: BrainConfig) -> ModelClient:
@@ -103,6 +133,7 @@ class ModelAdapter:
     ) -> None:
         self.store = store
         self._client_factory = client_factory
+        self.meter = UsageMeter()
 
     @property
     def config(self) -> BrainConfig:
@@ -120,7 +151,11 @@ class ModelAdapter:
     ) -> str:
         """Run one completion through the brain a tile resolved to."""
         client = self.client_for(resolved)
-        return await client.complete(prompt, system=system)
+        text = await client.complete(prompt, system=system)
+        usage = getattr(client, "last_usage", None)
+        if usage is not None:
+            self.meter.add(f"{resolved.provider}/{resolved.model}", usage)
+        return text
 
     async def test(self, provider_id: str) -> TestResult:
         """Run a trivial completion against a provider; report ok/error.

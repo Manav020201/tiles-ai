@@ -22,12 +22,33 @@ import asyncio
 import json
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
+
+
+@dataclass(frozen=True)
+class Usage:
+    """Tokens consumed by one completion (or summed across many)."""
+
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+    @property
+    def total(self) -> int:
+        return self.input_tokens + self.output_tokens
+
+    def __add__(self, other: Usage) -> Usage:
+        return Usage(
+            self.input_tokens + other.input_tokens,
+            self.output_tokens + other.output_tokens,
+        )
 
 
 @runtime_checkable
 class ModelClient(Protocol):
-    """The one method a tile relies on."""
+    """The one method a tile relies on. Clients expose `last_usage` after a call."""
+
+    last_usage: Usage | None
 
     async def complete(self, prompt: str, *, system: str | None = None) -> str: ...
 
@@ -46,9 +67,11 @@ class EchoModelClient:
 
     def __init__(self, model: str = "echo") -> None:
         self.model = model
+        self.last_usage: Usage | None = None
 
     async def complete(self, prompt: str, *, system: str | None = None) -> str:
         head = prompt.strip().splitlines()[0] if prompt.strip() else ""
+        self.last_usage = Usage(0, 0)  # offline: no real tokens
         return f"[echo:{self.model}] {head[:200]}"
 
 
@@ -58,12 +81,16 @@ class OllamaClient:
     def __init__(self, endpoint: str, model: str) -> None:
         self.endpoint = endpoint.rstrip("/")
         self.model = model
+        self.last_usage: Usage | None = None
 
     async def complete(self, prompt: str, *, system: str | None = None) -> str:
         payload = {"model": self.model, "prompt": prompt, "stream": False}
         if system:
             payload["system"] = system
         data = await _post_json(f"{self.endpoint}/api/generate", payload)
+        self.last_usage = Usage(
+            int(data.get("prompt_eval_count", 0)), int(data.get("eval_count", 0))
+        )
         return str(data.get("response", "")).strip()
 
 
@@ -74,6 +101,7 @@ class AnthropicClient:
         self.api_key = api_key
         self.model = model
         self.max_tokens = max_tokens
+        self.last_usage: Usage | None = None
 
     async def complete(self, prompt: str, *, system: str | None = None) -> str:
         payload = {
@@ -91,6 +119,8 @@ class AnthropicClient:
                 "anthropic-version": "2023-06-01",
             },
         )
+        u = data.get("usage", {})
+        self.last_usage = Usage(int(u.get("input_tokens", 0)), int(u.get("output_tokens", 0)))
         blocks = data.get("content", [])
         return "".join(b.get("text", "") for b in blocks if b.get("type") == "text").strip()
 
@@ -112,6 +142,7 @@ class OpenAIClient:
         self.api_key = api_key
         self.model = model
         self.base_url = base_url.rstrip("/")
+        self.last_usage: Usage | None = None
 
     async def complete(self, prompt: str, *, system: str | None = None) -> str:
         messages = []
@@ -123,6 +154,8 @@ class OpenAIClient:
             {"model": self.model, "messages": messages},
             headers={"authorization": f"Bearer {self.api_key}"},
         )
+        u = data.get("usage", {})
+        self.last_usage = Usage(int(u.get("prompt_tokens", 0)), int(u.get("completion_tokens", 0)))
         choices = data.get("choices", [])
         if not choices:
             return ""

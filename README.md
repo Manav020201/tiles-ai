@@ -75,7 +75,7 @@ gitignored), or connect via OAuth.
 | 🧠 **Choose your model** | cloud (Anthropic / OpenAI) or local (Ollama) |
 | ✅ **Approve before it acts** | anything that writes or sends waits for your OK |
 | ⏱ **Schedule & chain** | run a tile on a timer, or feed one tile's output into another |
-| 👀 **Observe** | live activity per tile, and clear errors as you go |
+| 👀 **Observe** | live activity per tile, a 🔥 **token-usage** counter, and clear errors as you go |
 
 ## How it works
 

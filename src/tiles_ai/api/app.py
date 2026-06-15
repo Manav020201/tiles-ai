@@ -80,6 +80,7 @@ from .schemas import (
     TileSummary,
     UpdateConnectorRequest,
     UpdateTileRequest,
+    UsageView,
 )
 
 
@@ -534,7 +535,21 @@ def create_app(
                 for q in outcome.gate.queued
             ],
             rejected=[RejectedView(tool=a.tool) for a in outcome.gate.rejected],
+            usage=(
+                UsageView(
+                    input_tokens=outcome.usage.input_tokens,
+                    output_tokens=outcome.usage.output_tokens,
+                    total_tokens=outcome.usage.total,
+                )
+                if outcome.usage is not None
+                else None
+            ),
         )
+
+    @app.get("/api/usage")
+    def usage() -> dict:
+        # Session token totals + per-model breakdown for the board's burn counter.
+        return adapter.meter.snapshot()
 
     # --- approvals ---------------------------------------------------------
 

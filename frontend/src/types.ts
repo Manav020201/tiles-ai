@@ -34,12 +34,23 @@ export interface TileDetail extends Tile {
   consumes: { name: string; description?: string }[];
 }
 
+export interface Usage {
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+}
+
+export interface UsageTotals extends Usage {
+  by_model: Record<string, Usage>;
+}
+
 export interface RunResponse {
   tile_id: string;
   result: unknown;
   executed: { tool: string; ok: boolean; output: unknown }[];
   queued: { approval_id: string; tool: string; summary: string; args: Record<string, unknown> }[];
   rejected: { tool: string }[];
+  usage?: Usage | null;
 }
 
 export interface Approval {

@@ -12,6 +12,7 @@ import type {
   RunResponse,
   Tile,
   TileDetail,
+  UsageTotals,
 } from "./types";
 
 async function http<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -55,6 +56,7 @@ export const api = {
   introspectConnector: (endpoint: string, env: string[]) =>
     http<ConnectorTool[]>("POST", "/api/connectors/introspect", { endpoint, env }),
 
+  usage: () => http<UsageTotals>("GET", "/api/usage"),
   listErrors: () => http<LoadError[]>("GET", "/api/errors"),
   reload: () => http<{ connectors: number; tiles: number; errors: number }>("POST", "/api/reload"),
   activate: (id: string) => http<Tile>("POST", `/api/tiles/${id}/activate`),

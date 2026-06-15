@@ -11,6 +11,7 @@ from .adapter import (
     ClientFactory,
     ModelAdapter,
     TestResult,
+    UsageMeter,
     default_client_factory,
     echo_client_factory,
     register_hosted_client,
@@ -22,6 +23,7 @@ from .clients import (
     ModelClientError,
     OllamaClient,
     OpenAIClient,
+    Usage,
 )
 from .store import BrainStore
 
@@ -29,6 +31,8 @@ __all__ = [
     "BrainStore",
     "ModelAdapter",
     "TestResult",
+    "UsageMeter",
+    "Usage",
     "ClientFactory",
     "default_client_factory",
     "echo_client_factory",

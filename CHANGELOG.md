@@ -58,6 +58,16 @@ All notable changes to this project are documented here. The format follows
   each move queued for your approval). The first *local* side-effect flow, tested
   end to end (propose → approve → files move on disk).
 
+## [0.1.9] - 2026-06-15
+
+### Added
+- **Token usage ("burn") in the UI.** Model clients now capture token usage from
+  each response (Anthropic / OpenAI / Ollama; Echo = 0). The board shows a live
+  **🔥 N tok** session counter in the top bar and per-run **in/out** tokens in the
+  tile sheet's *Last run*. New `GET /api/usage` (session total + per-model
+  breakdown), `usage` on the run response, and a `usage` SSE event. In-memory per
+  session (resets on restart). `ModelAdapter.meter` / `UsageMeter` / `Usage`.
+
 ## [0.1.8] - 2026-06-15
 
 ### Fixed

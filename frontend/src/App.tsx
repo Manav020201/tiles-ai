@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
-import type { Approval, LoadError, Provider, Tile, TilesEvent } from "./types";
+import type { Approval, LoadError, Provider, Tile, TilesEvent, UsageTotals } from "./types";
 import { Onboarding } from "./components/Onboarding";
 import { TileIcon } from "./components/TileIcon";
 import { TileSheet } from "./components/TileSheet";
@@ -20,6 +20,7 @@ export function App() {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [events, setEvents] = useState<TilesEvent[]>([]);
   const [errors, setErrors] = useState<LoadError[]>([]);
+  const [usage, setUsage] = useState<UsageTotals | null>(null);
   const [openTileId, setOpenTileId] = useState<string | null>(null);
   const [editingTileId, setEditingTileId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -28,16 +29,18 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false);
 
   const refresh = useCallback(async () => {
-    const [t, a, p, e] = await Promise.all([
+    const [t, a, p, e, u] = await Promise.all([
       api.listTiles(),
       api.listApprovals(),
       api.listProviders(),
       api.listErrors(),
+      api.usage(),
     ]);
     setTiles(t);
     setApprovals(a);
     setProviders(p);
     setErrors(e);
+    setUsage(u);
   }, []);
 
   const rescan = useCallback(async () => {
@@ -71,6 +74,7 @@ export function App() {
       "action.queued",
       "action.rejected",
       "approval.resolved",
+      "usage",
     ]) {
       source.addEventListener(type, onEvent);
     }
@@ -99,6 +103,14 @@ export function App() {
           <span className="brand-mark">▦</span> Tiles AI
         </div>
         <div className="brain-summary">
+          {usage && usage.total_tokens > 0 && (
+            <span
+              className="token-chip"
+              title={`Tokens this session — ${usage.input_tokens.toLocaleString()} in / ${usage.output_tokens.toLocaleString()} out`}
+            >
+              🔥 {usage.total_tokens.toLocaleString()} tok
+            </span>
+          )}
           <button className="icon-btn" onClick={rescan} title="Re-scan tiles & connectors from disk">
             ⟳
           </button>

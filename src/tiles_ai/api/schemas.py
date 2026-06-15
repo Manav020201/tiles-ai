@@ -70,12 +70,19 @@ class RejectedView(BaseModel):
     tool: str
 
 
+class UsageView(BaseModel):
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
+
+
 class RunResponse(BaseModel):
     tile_id: str
     result: Any
     executed: list[ExecutedView]
     queued: list[QueuedView]
     rejected: list[RejectedView]
+    usage: UsageView | None = None  # tokens this run consumed
 
 
 class FlowRunRequest(BaseModel):
