@@ -20,6 +20,7 @@ export function EditTileForm({
   const [instructions, setInstructions] = useState("");
   const [tier, setTier] = useState("read_only");
   const [wantsInput, setWantsInput] = useState(true);
+  const [schedule, setSchedule] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +33,7 @@ export function EditTileForm({
       setInstructions(d.instructions);
       setTier(d.permission_tier);
       setWantsInput(d.wants_input);
+      setSchedule(d.schedule ?? "");
     });
   }, [tileId]);
 
@@ -61,6 +63,7 @@ export function EditTileForm({
         instructions: instructions.trim(),
         permission_tier: tier,
         wants_input: wantsInput,
+        schedule: schedule.trim(),
       });
       onSaved();
       onClose();
@@ -119,14 +122,24 @@ export function EditTileForm({
                 <option value="autonomous">autonomous</option>
               </select>
             </label>
-            <label className="tool-check">
-              <input
-                type="checkbox"
-                checked={wantsInput}
-                onChange={(e) => setWantsInput(e.target.checked)}
-              />
-              <span>Takes typed input</span>
-            </label>
+            <div className="form-grid">
+              <label className="tool-check" style={{ alignSelf: "end", paddingBottom: "0.6rem" }}>
+                <input
+                  type="checkbox"
+                  checked={wantsInput}
+                  onChange={(e) => setWantsInput(e.target.checked)}
+                />
+                <span>Takes typed input</span>
+              </label>
+              <label className="field">
+                <span>Run every (blank = manual)</span>
+                <input
+                  value={schedule}
+                  placeholder="e.g. 5m, 1h"
+                  onChange={(e) => setSchedule(e.target.value)}
+                />
+              </label>
+            </div>
           </>
         )}
 

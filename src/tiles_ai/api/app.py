@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -34,7 +35,7 @@ from ..contracts import (
 from ..events import Event, EventBus
 from ..model import BrainStore, ModelAdapter
 from ..registry import Registry
-from ..runtime import Runtime, RuntimeError_
+from ..runtime import Runtime, RuntimeError_, Scheduler
 from ..scaffold import (
     ScaffoldError,
     build_manifest,
@@ -68,6 +69,7 @@ from .schemas import (
     ResolveRequest,
     RunRequest,
     RunResponse,
+    ScheduledTileView,
     SetDefaultRequest,
     TestResponse,
     TileDetail,
@@ -89,13 +91,23 @@ def create_app(
     adapter = model_adapter or ModelAdapter(store)
     bus = EventBus()
     runtime = Runtime(registry, adapter, events=bus)
+    scheduler = Scheduler(runtime)
 
-    app = FastAPI(title="Tiles AI", version=__version__)
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        await scheduler.start()  # run tiles that declare an interval schedule
+        try:
+            yield
+        finally:
+            await scheduler.stop()
+
+    app = FastAPI(title="Tiles AI", version=__version__, lifespan=lifespan)
     app.state.registry = registry
     app.state.store = store
     app.state.adapter = adapter
     app.state.bus = bus
     app.state.runtime = runtime
+    app.state.scheduler = scheduler
 
     # --- helpers -----------------------------------------------------------
 
@@ -148,6 +160,7 @@ def create_app(
             input_hint=input_hint,
             connector_ready=not missing_env,
             missing_env=missing_env,
+            schedule=m.schedule.every if m.schedule else None,
         )
 
     def _provider_view(provider) -> ProviderView:
@@ -282,6 +295,7 @@ def create_app(
             allowed_tools=body.allowed_tools,
             wants_input=body.wants_input,
             input_hint=body.input_hint,
+            schedule=body.schedule,
         )
         try:
             manifest_dict = build_manifest(**fields)  # schema validation
@@ -316,6 +330,19 @@ def create_app(
             raise HTTPException(400, str(exc)) from exc
         registry.rescan(root)
         return _tile_summary(tile_id)
+
+    @app.get("/api/schedules", response_model=list[ScheduledTileView])
+    def list_schedules() -> list[ScheduledTileView]:
+        out = []
+        for tid in sorted(registry.tiles):
+            sched = registry.tiles[tid].manifest.schedule
+            if sched is not None:
+                out.append(
+                    ScheduledTileView(
+                        tile_id=tid, every=sched.every, interval_seconds=sched.interval_seconds()
+                    )
+                )
+        return out
 
     @app.get("/api/tiles/{tile_id}/flow", response_model=FlowCandidatesView)
     def tile_flow(tile_id: str) -> FlowCandidatesView:

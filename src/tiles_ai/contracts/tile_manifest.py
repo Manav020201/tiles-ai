@@ -20,10 +20,39 @@ This module defines the on-disk shape of `tiles/<id>/manifest.yaml`.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+import re
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .ids import SLUG_PATTERN
 from .permissions import PermissionTier
+
+_UNIT_SECONDS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+
+
+class Schedule(BaseModel):
+    """An interval trigger: run this tile automatically every `every`.
+
+    v0 supports simple intervals ('30s', '5m', '1h', '2d') — the scheduler
+    activates the tile and runs it on that cadence, with an optional fixed
+    `input`. (Cron and event triggers are a later extension.)
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    every: str = Field(description="Interval like '30s', '5m', '1h', '2d'.")
+    input: Any = Field(default=None, description="Fixed input passed on each scheduled run.")
+
+    @field_validator("every")
+    @classmethod
+    def _valid_interval(cls, v: str) -> str:
+        if not re.match(r"^\d+[smhd]$", v):
+            raise ValueError("schedule.every must look like '30s', '5m', '1h', or '2d'")
+        return v
+
+    def interval_seconds(self) -> int:
+        return int(self.every[:-1]) * _UNIT_SECONDS[self.every[-1]]
 
 
 class ModelRef(BaseModel):
@@ -95,6 +124,9 @@ class TileManifest(BaseModel):
     # Composition seams (reserved; declared so future work plugs in cleanly).
     provides: list[Capability] = Field(default_factory=list)
     consumes: list[Capability] = Field(default_factory=list)
+
+    # Optional automatic trigger (interval). Omit for manual-only activation.
+    schedule: Schedule | None = None
 
     @model_validator(mode="after")
     def _check_invariants(self) -> TileManifest:

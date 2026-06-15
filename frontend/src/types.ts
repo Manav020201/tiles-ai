@@ -24,6 +24,7 @@ export interface Tile {
   input_hint: string | null;
   connector_ready: boolean;
   missing_env: string[];
+  schedule: string | null;
 }
 
 export interface TileDetail extends Tile {
@@ -92,6 +93,7 @@ export interface NewTile {
   allowed_tools?: string[];
   wants_input?: boolean;
   input_hint?: string | null;
+  schedule?: string | null;
 }
 
 export interface NewConnector {

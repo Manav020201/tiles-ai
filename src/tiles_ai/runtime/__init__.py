@@ -16,10 +16,12 @@ from .gate import (
 )
 from .handles import ModelHandle, ToolDenied, ToolProxy
 from .runtime import ActiveTile, RunOutcome, Runtime, RuntimeError_
+from .scheduler import Scheduler
 
 __all__ = [
     "Runtime",
     "RuntimeError_",
+    "Scheduler",
     "ActiveTile",
     "RunOutcome",
     "PermissionGate",

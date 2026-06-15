@@ -48,6 +48,7 @@ def build_manifest(
     allowed_tools: list[str] | None = None,
     wants_input: bool = True,
     input_hint: str | None = None,
+    schedule: str | None = None,
 ) -> dict:
     """Build a tile manifest dict and validate it. Raises ScaffoldError if invalid."""
     if not re.match(SLUG_PATTERN, id):
@@ -66,6 +67,8 @@ def build_manifest(
         manifest["allowed_tools"] = list(allowed_tools or [])
     if wants_input:
         manifest["consumes"] = [{"name": "input", "description": input_hint or "Type here…"}]
+    if schedule:
+        manifest["schedule"] = {"every": schedule}
 
     try:
         TileManifest.model_validate(manifest)
@@ -137,6 +140,11 @@ def update_tile(
             ]
         else:
             data.pop("consumes", None)
+    if changes.get("schedule") is not None:
+        if changes["schedule"]:
+            data["schedule"] = {"every": changes["schedule"]}
+        else:
+            data.pop("schedule", None)
 
     try:
         manifest = TileManifest.model_validate(data)

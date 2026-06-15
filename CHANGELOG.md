@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Scheduled triggers.** A tile can declare `schedule: { every: "5m" }` to run
+  automatically on an interval. A `Scheduler` (wired into the API lifespan) reads
+  the registry each tick and runs due tiles; `GET /api/schedules`; the create/edit
+  forms have a "Run every" field and the tile sheet shows a ⏱ badge.
 - **Multi-tile orchestration** (the `provides`/`consumes` seam). `Runtime.run_flow`
   runs tiles in sequence, piping each result into the next's input;
   `flow_candidates` matches `provides` ↔ `consumes`. `POST /api/flows/run` +

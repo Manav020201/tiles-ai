@@ -18,6 +18,7 @@ export function NewTileForm({
   const [instructions, setInstructions] = useState("");
   const [tier, setTier] = useState("read_only");
   const [wantsInput, setWantsInput] = useState(true);
+  const [schedule, setSchedule] = useState("");
   const [connectorId, setConnectorId] = useState("");
   const [allowed, setAllowed] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -46,6 +47,7 @@ export function NewTileForm({
         connector: connectorId || null,
         allowed_tools: connectorId ? allowed : [],
         wants_input: wantsInput,
+        schedule: schedule.trim() || null,
       });
       onCreated();
       onClose();
@@ -149,14 +151,24 @@ export function NewTileForm({
           </div>
         )}
 
-        <label className="tool-check">
-          <input
-            type="checkbox"
-            checked={wantsInput}
-            onChange={(e) => setWantsInput(e.target.checked)}
-          />
-          <span>Takes typed input</span>
-        </label>
+        <div className="form-grid">
+          <label className="tool-check" style={{ alignSelf: "end", paddingBottom: "0.6rem" }}>
+            <input
+              type="checkbox"
+              checked={wantsInput}
+              onChange={(e) => setWantsInput(e.target.checked)}
+            />
+            <span>Takes typed input</span>
+          </label>
+          <label className="field">
+            <span>Run every (optional)</span>
+            <input
+              value={schedule}
+              placeholder="e.g. 5m, 1h, 1d"
+              onChange={(e) => setSchedule(e.target.value)}
+            />
+          </label>
+        </div>
 
         {error && <div className="error-text">{error}</div>}
 

@@ -57,7 +57,7 @@ from .tile import (
     Tile,
     ValidationResult,
 )
-from .tile_manifest import Capability, ModelRef, TileManifest
+from .tile_manifest import Capability, ModelRef, Schedule, TileManifest
 from .validation import (
     ContractError,
     assert_tile_valid,
@@ -75,6 +75,7 @@ __all__ = [
     "TileManifest",
     "ModelRef",
     "Capability",
+    "Schedule",
     # brain
     "BrainConfig",
     "ProviderKind",

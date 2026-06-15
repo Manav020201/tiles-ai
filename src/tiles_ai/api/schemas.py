@@ -39,6 +39,7 @@ class TileSummary(BaseModel):
     input_hint: str | None = None  # placeholder for that input, if any
     connector_ready: bool = True  # false if the connector is missing required env
     missing_env: list[str] = []  # env vars the connector needs but that aren't set
+    schedule: str | None = None  # interval like "5m" if the tile auto-runs
 
 
 class TileDetail(TileSummary):
@@ -190,6 +191,13 @@ class UpdateTileRequest(BaseModel):
     permission_tier: str | None = None
     wants_input: bool | None = None
     input_hint: str | None = None
+    schedule: str | None = None  # "" clears it; e.g. "5m"
+
+
+class ScheduledTileView(BaseModel):
+    tile_id: str
+    every: str
+    interval_seconds: int
 
 
 class CreateTileRequest(BaseModel):
@@ -203,3 +211,4 @@ class CreateTileRequest(BaseModel):
     allowed_tools: list[str] = []
     wants_input: bool = True
     input_hint: str | None = None
+    schedule: str | None = None  # interval like "5m" to auto-run

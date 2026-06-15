@@ -293,6 +293,17 @@ class Runtime:
                 fed_by.append(other_id)
         return {"feeds": sorted(feeds), "fed_by": sorted(fed_by)}
 
+    async def run_scheduled(self, tile_id: str) -> RunOutcome:
+        """Activate (if needed) and run a tile on its schedule's fixed input."""
+        loaded = self.registry.get_tile(tile_id)
+        if loaded is None:
+            raise RuntimeError_(f"no available tile '{tile_id}'")
+        if not self.is_active(tile_id):
+            await self.activate(tile_id)
+        self._emit("tile.scheduled", tile_id)
+        inp = loaded.manifest.schedule.input if loaded.manifest.schedule else None
+        return await self.run(tile_id, inp)
+
     async def deactivate(self, tile_id: str) -> None:
         """Stop a tile: on_deactivate, disconnect, drop activation state."""
         active = self._active.pop(tile_id, None)

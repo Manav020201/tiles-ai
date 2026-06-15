@@ -129,6 +129,7 @@ export function TileSheet({
               {tile.uses_default_brain ? "default" : "pinned"}: {tile.brain?.model}
             </span>
           )}
+          {tile.schedule && <span className="pill pill-tool">⏱ every {tile.schedule}</span>}
         </div>
 
         {blocked && (

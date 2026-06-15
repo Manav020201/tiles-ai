@@ -23,6 +23,7 @@ export function makeTile(over: Partial<Tile> = {}): Tile {
     input_hint: "Ask…",
     connector_ready: true,
     missing_env: [],
+    schedule: null,
     ...over,
   };
 }
