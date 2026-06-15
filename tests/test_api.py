@@ -120,9 +120,66 @@ def test_provider_management_and_test_action():
     # No api_key leaks in the view.
     assert "api_key" not in providers[0]
 
-    # Test action runs through the (echo) client and reports ok.
+    # In offline (echo) mode the test action is honest: it does NOT claim the key
+    # works, since every call would just echo.
     test = client.post("/api/providers/local/test").json()
-    assert test["ok"] is True
+    assert test["ok"] is False
+    assert "--echo" in test["detail"]
+
+
+def test_provider_test_reports_ok_with_a_real_brain(tmp_path):
+    # Outside echo mode, a working brain reports ok. Use a stub client so the test
+    # stays offline without pretending to be echo.
+    class _OkClient:
+        async def complete(self, prompt, *, system=None):
+            return "ok"
+
+    store = BrainStore.load(tmp_path / "brain.local.yaml")
+    store.add_provider(
+        HostedProvider(id="cloud", provider="anthropic", api_key="sk", model="claude-opus-4-8"),
+        make_default=True,
+    )
+    app = create_app(
+        root=REPO_ROOT,
+        brain_store=store,
+        model_adapter=ModelAdapter(store, client_factory=lambda r, c: _OkClient()),
+    )
+    test = TestClient(app).post("/api/providers/cloud/test").json()
+    assert test["ok"] is True and test["detail"] == "ok"
+
+
+def test_brain_changes_persist_to_disk(tmp_path):
+    # A path-backed store (the real `tiles up` case) must save UI changes so the
+    # provider survives a restart — regression test for the add/save gap.
+    brain_file = tmp_path / "brain.local.yaml"
+    store = BrainStore.load(brain_file)  # absent file -> empty store with a path
+    app = create_app(
+        root=REPO_ROOT,
+        brain_store=store,
+        model_adapter=ModelAdapter(store, client_factory=echo_client_factory),
+    )
+    client = TestClient(app)
+
+    assert not brain_file.exists()
+    client.post(
+        "/api/providers",
+        json={
+            "provider": {
+                "id": "cloud",
+                "kind": "hosted",
+                "provider": "anthropic",
+                "api_key": "sk-real",
+                "model": "claude-opus-4-8",
+            },
+            "make_default": True,
+        },
+    )
+
+    # Written to disk, and a fresh load sees the provider + default.
+    assert brain_file.exists()
+    reloaded = BrainStore.load(brain_file)
+    assert reloaded.config.default_provider == "cloud"
+    assert reloaded.config.get("cloud").api_key == "sk-real"
 
 
 def test_pin_brain_override():

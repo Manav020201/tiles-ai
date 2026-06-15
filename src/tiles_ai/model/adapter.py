@@ -130,6 +130,14 @@ class ModelAdapter:
         provider = self.store.config.get(provider_id)
         if provider is None:
             return TestResult(ok=False, detail=f"no provider '{provider_id}'")
+        if self._client_factory is echo_client_factory:
+            # Running offline (`tiles up --echo`): every call echoes, so a "test"
+            # here wouldn't exercise the key. Say so instead of a false green.
+            return TestResult(
+                ok=False,
+                detail="Offline demo mode (--echo): real models are disabled. "
+                "Restart with `tiles up` (no --echo) to use this key.",
+            )
         resolved = ResolvedBrain(
             source="default",
             provider=provider.provider_family(),

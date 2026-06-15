@@ -38,6 +38,12 @@ class BrainStore:
     def config(self) -> BrainConfig:
         return self._config
 
+    @property
+    def path(self) -> Path | None:
+        """The YAML file this store persists to, or None for an in-memory store
+        (e.g. the offline `--echo` demo brain)."""
+        return self._path
+
     def add_provider(self, provider: Provider, *, make_default: bool = False) -> None:
         """Add (or replace) a provider. Re-validates the whole config.
 

@@ -528,9 +528,16 @@ def create_app(
     def list_providers() -> list[ProviderView]:
         return [_provider_view(p) for p in store.config.providers]
 
+    def _persist_brain() -> None:
+        # Save to brain.local.yaml so UI changes survive a restart. The offline
+        # echo store has no path; there's nothing (and no key) to persist there.
+        if store.path is not None:
+            store.save()
+
     @app.post("/api/providers", response_model=list[ProviderView])
     def add_provider(body: AddProviderRequest) -> list[ProviderView]:
         store.add_provider(body.provider, make_default=body.make_default)
+        _persist_brain()
         return [_provider_view(p) for p in store.config.providers]
 
     @app.put("/api/brain/default", response_model=list[ProviderView])
@@ -538,6 +545,7 @@ def create_app(
         if store.config.get(body.provider_id) is None:
             raise HTTPException(404, f"no provider '{body.provider_id}'")
         store.set_default(body.provider_id)
+        _persist_brain()
         return [_provider_view(p) for p in store.config.providers]
 
     @app.delete("/api/providers/{provider_id}", response_model=list[ProviderView])
@@ -545,6 +553,7 @@ def create_app(
         if store.config.get(provider_id) is None:
             raise HTTPException(404, f"no provider '{provider_id}'")
         store.remove_provider(provider_id)
+        _persist_brain()
         return [_provider_view(p) for p in store.config.providers]
 
     @app.post("/api/providers/{provider_id}/test", response_model=TestResponse)

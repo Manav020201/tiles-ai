@@ -44,11 +44,23 @@ def test_resolve_pinned_local():
     assert resolved.provider_id == "local"
 
 
-def test_test_action_ok_offline():
+def test_test_action_in_echo_mode_is_honest():
+    # The offline echo factory can't exercise a real key, so test() refuses to
+    # report a false green and explains why.
     adapter = ModelAdapter(_store(), client_factory=echo_client_factory)
     result = asyncio.run(adapter.test("cloud"))
-    assert result.ok
-    assert "[echo:" in result.detail
+    assert not result.ok
+    assert "--echo" in result.detail
+
+
+def test_test_action_ok_with_real_client():
+    class _OkClient:
+        async def complete(self, prompt, *, system=None):
+            return "ok"
+
+    adapter = ModelAdapter(_store(), client_factory=lambda r, c: _OkClient())
+    result = asyncio.run(adapter.test("cloud"))
+    assert result.ok and result.detail == "ok"
 
 
 def test_test_action_unknown_provider():

@@ -58,6 +58,17 @@ All notable changes to this project are documented here. The format follows
   each move queued for your approval). The first *local* side-effect flow, tested
   end to end (propose → approve → files move on disk).
 
+## [0.1.2] - 2026-06-15
+
+### Fixed
+- **Brain settings now persist.** Providers added/changed/removed from the
+  Settings UI were only held in memory and lost on restart — the `/api/providers`
+  endpoints never wrote `brain.local.yaml`. They now save on every change.
+- **The Test button is honest in `--echo` mode.** Under `tiles up --echo` every
+  model call is offline echo, so testing a key always reported a misleading
+  "working". It now returns a clear "real models are disabled — restart without
+  `--echo`" instead of a false green.
+
 ## [0.1.1] - 2026-06-15
 
 ### Fixed

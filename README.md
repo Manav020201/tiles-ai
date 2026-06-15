@@ -173,6 +173,22 @@ or skip pipx and use the plain `venv + pip` recipe in the item above.
 </details>
 
 <details>
+<summary><strong>I added a real API key and Test passed, but tiles still just echo</strong></summary>
+
+You're running `tiles up --echo`. The `--echo` flag forces an **offline demo
+brain** — every tile (and the Test button) returns a canned echo, and real keys
+are ignored by design. Restart **without** `--echo`:
+
+```bash
+tiles up
+```
+
+then add your key in **Settings (🧠)**. It's saved to `brain.local.yaml` and used
+for every tile. (On recent versions, clicking Test while in `--echo` mode says so
+explicitly instead of reporting a false "working".)
+</details>
+
+<details>
 <summary><strong>I have an old version installed</strong></summary>
 
 Check with `tiles --version` and `pip show tiles-ai`. Upgrade with
