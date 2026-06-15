@@ -9,6 +9,7 @@ a tile that loads, or it raises and writes nothing.
 from __future__ import annotations
 
 import re
+import shutil
 from pathlib import Path
 
 import yaml
@@ -148,6 +149,61 @@ def update_tile(
 
     mpath.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
     return folder
+
+
+def delete_tile(root: str | Path, tile_id: str) -> None:
+    """Remove a tile folder. Raises ScaffoldError if it doesn't exist."""
+    folder = Path(root) / "tiles" / tile_id
+    if not folder.exists():
+        raise ScaffoldError(f"no tile '{tile_id}'.")
+    shutil.rmtree(folder)
+
+
+def update_connector(root: str | Path, connector_id: str, changes: dict) -> Path:
+    """Update a connector's manifest in place (app, endpoint, env, tools).
+
+    Keeps adapter.py. Validates against `ConnectorManifest` before writing.
+    """
+    folder = Path(root) / "connectors" / connector_id
+    mpath = folder / "manifest.yaml"
+    if not mpath.exists():
+        raise ScaffoldError(f"no connector '{connector_id}'.")
+
+    data = yaml.safe_load(mpath.read_text(encoding="utf-8")) or {}
+    if changes.get("app") is not None:
+        data["app"] = changes["app"]
+    if changes.get("endpoint") is not None:
+        data["endpoint"] = changes["endpoint"]
+    if changes.get("env") is not None:
+        env = list(changes["env"])
+        data["auth"] = {"scheme": "api_key" if env else "none", "env": env}
+    if changes.get("tools") is not None:
+        data["tools"] = [
+            {
+                "name": t["name"],
+                "description": t.get("description", ""),
+                "side_effect": bool(t.get("side_effect")),
+            }
+            for t in changes["tools"]
+        ]
+
+    try:
+        ConnectorManifest.model_validate(data)
+    except Exception as exc:
+        raise ScaffoldError(f"invalid connector: {exc}") from exc
+    mpath.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    return folder
+
+
+def delete_connector(root: str | Path, connector_id: str) -> None:
+    """Remove a connector folder. Raises ScaffoldError if it doesn't exist.
+
+    The caller is responsible for refusing deletion while tiles still bind it.
+    """
+    folder = Path(root) / "connectors" / connector_id
+    if not folder.exists():
+        raise ScaffoldError(f"no connector '{connector_id}'.")
+    shutil.rmtree(folder)
 
 
 def scaffold_connector(

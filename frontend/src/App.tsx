@@ -8,6 +8,7 @@ import { Approvals } from "./components/Approvals";
 import { ActivityFeed } from "./components/ActivityFeed";
 import { NewTileForm } from "./components/NewTileForm";
 import { AddConnectorForm } from "./components/AddConnectorForm";
+import { EditConnectorForm } from "./components/EditConnectorForm";
 import { EditTileForm } from "./components/EditTileForm";
 import { Settings } from "./components/Settings";
 import { Issues } from "./components/Issues";
@@ -23,6 +24,7 @@ export function App() {
   const [editingTileId, setEditingTileId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [addingApp, setAddingApp] = useState(false);
+  const [editingConnector, setEditingConnector] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -122,6 +124,15 @@ export function App() {
               <h2 className="group-title">
                 {heading}
                 {hint && <span className="group-hint">{hint}</span>}
+                {heading !== "Instant" && (
+                  <button
+                    className="group-manage"
+                    title={`Manage the ${heading} app`}
+                    onClick={() => setEditingConnector(heading)}
+                  >
+                    ⚙
+                  </button>
+                )}
               </h2>
               <div className="board">
                 {items.map((tile) => (
@@ -173,12 +184,21 @@ export function App() {
         <TileSheet
           tile={openTile}
           providers={providers}
+          events={events}
           onClose={() => setOpenTileId(null)}
           onChanged={refresh}
           onEdit={() => {
             setEditingTileId(openTile.id);
             setOpenTileId(null);
           }}
+        />
+      )}
+
+      {editingConnector && (
+        <EditConnectorForm
+          connectorId={editingConnector}
+          onClose={() => setEditingConnector(null)}
+          onChanged={refresh}
         />
       )}
 

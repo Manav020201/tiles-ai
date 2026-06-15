@@ -1,23 +1,40 @@
 import { useState } from "react";
 import { api, ApiError } from "../api";
-import type { Provider, RunResponse, Tile } from "../types";
+import type { Provider, RunResponse, Tile, TilesEvent } from "../types";
 import { renderResult } from "../lib/runResult";
+
+const EVENT_LABEL: Record<string, string> = {
+  "tile.activated": "activated",
+  "tile.deactivated": "stopped",
+  "tile.run": "ran",
+  "action.executed": "executed",
+  "action.queued": "queued",
+  "action.rejected": "rejected",
+  "approval.resolved": "approval resolved",
+};
+
+function fmtTime(ts: number | null): string {
+  return ts ? new Date(ts * 1000).toLocaleTimeString() : "";
+}
 
 // The "app view": a bottom sheet to run a tile and tune it. Holds the activate
 // toggle (green = running), input + Run, the last result, and the brain picker.
 export function TileSheet({
   tile,
   providers,
+  events,
   onClose,
   onChanged,
   onEdit,
 }: {
   tile: Tile;
   providers: Provider[];
+  events: TilesEvent[];
   onClose: () => void;
   onChanged: () => void;
   onEdit: () => void;
 }) {
+  const tileEvents = events.filter((e) => e.tile_id === tile.id).slice(0, 8);
   const [busy, setBusy] = useState(false);
   const [input, setInput] = useState("");
   const [lastRun, setLastRun] = useState<RunResponse | null>(null);
@@ -158,6 +175,23 @@ export function TileSheet({
             ))}
           </select>
         </div>
+
+        {tileEvents.length > 0 && (
+          <div className="tile-activity">
+            <div className="result-label">Recent activity</div>
+            <ul className="feed">
+              {tileEvents.map((e, i) => (
+                <li key={i} className="feed-item">
+                  <span className="feed-time">{fmtTime(e.ts)}</span>
+                  <span className="feed-label">{EVENT_LABEL[e.type] ?? e.type}</span>
+                  {typeof e.data.tool === "string" && (
+                    <span className="pill pill-tool">{e.data.tool}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="sheet-foot">
           <button className="btn btn-plain" onClick={onEdit}>

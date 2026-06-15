@@ -356,6 +356,36 @@ def test_remove_provider(tmp_path):
     assert client.delete("/api/providers/ghost").status_code == 404
 
 
+def test_edit_connector_from_board(tmp_path):
+    client, _ = _tmp_client(tmp_path)  # has connector "app"
+    resp = client.put("/api/connectors/app", json={"app": "Renamed App"})
+    assert resp.status_code == 200 and resp.json()["app"] == "Renamed App"
+
+
+def test_delete_connector_refused_when_bound(tmp_path):
+    client, _ = _tmp_client(tmp_path)
+    client.post(
+        "/api/tiles",
+        json={"name": "Bound", "connector": "app", "allowed_tools": ["read_thing"]},
+    )
+    resp = client.delete("/api/connectors/app")
+    assert resp.status_code == 409 and "used by" in resp.json()["detail"]
+
+
+def test_delete_connector_when_free(tmp_path):
+    client, _ = _tmp_client(tmp_path)
+    assert client.delete("/api/connectors/app").status_code == 200
+    assert "app" not in {c["id"] for c in client.get("/api/connectors").json()}
+
+
+def test_delete_tile_from_board(tmp_path):
+    client, _ = _tmp_client(tmp_path)
+    client.post("/api/tiles", json={"name": "Temp"})
+    assert client.delete("/api/tiles/temp").status_code == 200
+    assert "temp" not in {t["id"] for t in client.get("/api/tiles").json()}
+    assert client.delete("/api/tiles/ghost").status_code == 404
+
+
 def test_app_factory_builds_from_env(monkeypatch, tmp_path):
     monkeypatch.setenv("TILES_ECHO", "1")
     monkeypatch.setenv("TILES_ROOT", str(tmp_path))

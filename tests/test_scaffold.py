@@ -7,9 +7,12 @@ from tiles_ai.registry import Registry
 from tiles_ai.scaffold import (
     ScaffoldError,
     class_name,
+    delete_connector,
+    delete_tile,
     scaffold_connector,
     scaffold_tile,
     slugify,
+    update_connector,
     update_tile,
 )
 
@@ -125,3 +128,41 @@ def test_update_tile_rejects_invalid(tmp_path):
 def test_update_tile_missing(tmp_path):
     with pytest.raises(ScaffoldError, match="no tile"):
         update_tile(tmp_path, "ghost", {"name": "X"})
+
+
+def test_update_connector(tmp_path):
+    scaffold_connector(
+        tmp_path,
+        id="c",
+        app="C",
+        kind="mcp",
+        endpoint="npx x",
+        tools=[{"name": "a", "side_effect": False}],
+    )
+    update_connector(
+        tmp_path,
+        "c",
+        {
+            "app": "Renamed",
+            "tools": [{"name": "a", "side_effect": False}, {"name": "b", "side_effect": True}],
+        },
+    )
+    data = yaml.safe_load((tmp_path / "connectors" / "c" / "manifest.yaml").read_text())
+    assert data["app"] == "Renamed" and len(data["tools"]) == 2
+    assert Registry.discover(tmp_path).ok
+
+
+def test_delete_tile_and_connector(tmp_path):
+    scaffold_connector(tmp_path, id="c", app="C", kind="mock", tools=[])
+    scaffold_tile(tmp_path, id="t", name="T")
+    delete_tile(tmp_path, "t")
+    delete_connector(tmp_path, "c")
+    assert not (tmp_path / "tiles" / "t").exists()
+    assert not (tmp_path / "connectors" / "c").exists()
+
+
+def test_delete_missing_raises(tmp_path):
+    with pytest.raises(ScaffoldError, match="no tile"):
+        delete_tile(tmp_path, "ghost")
+    with pytest.raises(ScaffoldError, match="no connector"):
+        delete_connector(tmp_path, "ghost")

@@ -128,6 +128,8 @@ class ConnectorView(BaseModel):
     id: str
     app: str
     kind: str
+    endpoint: str | None = None
+    env: list[str] = []
     tools: list[ConnectorToolView]
 
 
@@ -138,6 +140,13 @@ class CreateConnectorRequest(BaseModel):
     endpoint: str | None = None  # MCP server command (required for kind=mcp)
     env: list[str] = []  # names of env vars the server needs
     tools: list[ConnectorToolView] = []
+
+
+class UpdateConnectorRequest(BaseModel):
+    app: str | None = None
+    endpoint: str | None = None
+    env: list[str] | None = None
+    tools: list[ConnectorToolView] | None = None
 
 
 class IntrospectRequest(BaseModel):

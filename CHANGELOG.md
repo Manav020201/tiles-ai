@@ -7,6 +7,13 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Edit / disconnect an app from the board.** A ⚙ on each connector group opens
+  a form to rename it, change its MCP command/env, re-fetch tools, or remove it
+  (refused while tiles still use it). `update_connector` / `delete_connector`,
+  `PUT`/`DELETE /api/connectors/{id}`. Tiles can be deleted too (`DELETE /api/tiles/{id}`).
+- **Per-tile activity** in the tile sheet — its recent events (activated, ran,
+  queued, …) filtered from the live stream.
+- A README hero illustration.
 - **Model settings in the UI.** A 🧠 nav-bar button opens a "Brains" panel to add
   a cloud LLM or a local (Ollama) model, set the default, test it, or remove it
   (`DELETE /api/providers/{id}`) — any time, not just first-launch onboarding.

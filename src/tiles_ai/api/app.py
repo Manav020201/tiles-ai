@@ -38,9 +38,12 @@ from ..runtime import Runtime, RuntimeError_
 from ..scaffold import (
     ScaffoldError,
     build_manifest,
+    delete_connector,
+    delete_tile,
     scaffold_connector,
     scaffold_tile,
     slugify,
+    update_connector,
     update_tile,
 )
 from .schemas import (
@@ -65,6 +68,7 @@ from .schemas import (
     TestResponse,
     TileDetail,
     TileSummary,
+    UpdateConnectorRequest,
     UpdateTileRequest,
 )
 
@@ -173,6 +177,8 @@ def create_app(
             id=m.id,
             app=m.app,
             kind=m.kind.value,
+            endpoint=m.endpoint,
+            env=m.auth.env,
             tools=[
                 ConnectorToolView(name=t.name, description=t.description, side_effect=t.side_effect)
                 for t in m.tools
@@ -213,6 +219,33 @@ def create_app(
             raise HTTPException(400, str(exc)) from exc
         registry.rescan(root)
         return _connector_view(cid)
+
+    @app.put("/api/connectors/{connector_id}", response_model=ConnectorView)
+    def edit_connector(connector_id: str, body: UpdateConnectorRequest) -> ConnectorView:
+        if registry.get_connector(connector_id) is None:
+            raise HTTPException(404, f"no connector '{connector_id}'")
+        changes = body.model_dump()
+        if changes.get("tools") is not None:
+            changes["tools"] = [t.model_dump() for t in body.tools]
+        try:
+            update_connector(root, connector_id, changes)
+        except ScaffoldError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        registry.rescan(root)
+        return _connector_view(connector_id)
+
+    @app.delete("/api/connectors/{connector_id}")
+    def remove_connector(connector_id: str) -> dict:
+        if registry.get_connector(connector_id) is None:
+            raise HTTPException(404, f"no connector '{connector_id}'")
+        bound = [t.id for t in registry.tiles_for_connector(connector_id)]
+        if bound:
+            raise HTTPException(
+                409, f"'{connector_id}' is used by tiles {bound} — remove those first."
+            )
+        delete_connector(root, connector_id)
+        registry.rescan(root)
+        return {"deleted": connector_id}
 
     @app.get("/api/errors", response_model=list[LoadErrorView])
     def list_errors() -> list[LoadErrorView]:
@@ -279,6 +312,14 @@ def create_app(
             raise HTTPException(400, str(exc)) from exc
         registry.rescan(root)
         return _tile_summary(tile_id)
+
+    @app.delete("/api/tiles/{tile_id}")
+    def remove_tile(tile_id: str) -> dict:
+        if registry.get_tile(tile_id) is None:
+            raise HTTPException(404, f"no tile '{tile_id}'")
+        delete_tile(root, tile_id)
+        registry.rescan(root)
+        return {"deleted": tile_id}
 
     @app.get("/api/tiles/{tile_id}", response_model=TileDetail)
     def get_tile(tile_id: str) -> TileDetail:

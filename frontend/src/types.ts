@@ -77,6 +77,8 @@ export interface Connector {
   id: string;
   app: string;
   kind: string;
+  endpoint?: string | null;
+  env?: string[];
   tools: ConnectorTool[];
 }
 

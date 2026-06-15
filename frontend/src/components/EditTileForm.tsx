@@ -35,6 +35,21 @@ export function EditTileForm({
     });
   }, [tileId]);
 
+  async function remove() {
+    if (!window.confirm(`Delete the tile "${detail?.name ?? tileId}"? This removes its files.`))
+      return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.removeTile(tileId);
+      onSaved();
+      onClose();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+      setBusy(false);
+    }
+  }
+
   async function save() {
     setBusy(true);
     setError(null);
@@ -117,13 +132,22 @@ export function EditTileForm({
 
         {error && <div className="error-text">{error}</div>}
 
-        <div className="modal-actions">
-          <button className="btn" onClick={onClose} disabled={busy}>
-            Cancel
+        <div className="modal-actions modal-actions-split">
+          <button className="btn btn-plain btn-danger" onClick={remove} disabled={busy || !detail}>
+            Delete
           </button>
-          <button className="btn btn-primary" onClick={save} disabled={busy || !detail || !name.trim()}>
-            {busy ? "Saving…" : "Save"}
-          </button>
+          <div className="modal-actions-right">
+            <button className="btn" onClick={onClose} disabled={busy}>
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={save}
+              disabled={busy || !detail || !name.trim()}
+            >
+              {busy ? "Saving…" : "Save"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

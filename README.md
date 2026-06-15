@@ -9,6 +9,8 @@ tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 [![CI](https://github.com/Manav020201/tiles-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Manav020201/tiles-ai/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+![Tiles AI — a home screen for your AI agents](docs/hero.svg)
+
 > **Status: v0.1.0.** The contract, registry/loader, runtime stack, permission
 > gate + approval queue, FastAPI control plane with an SSE stream, and the
 > iOS-style React board are all in — plus a real **MCP-backed connector**, app
@@ -39,7 +41,11 @@ cd frontend && npm install && npm run dev  # board on http://localhost:5173
 ```
 
 Other commands: `tiles list` (show discovered tiles/connectors), `tiles new <id>`
-(scaffold a tile). See [docs/AUTHORING.md](docs/AUTHORING.md).
+(scaffold a tile), `tiles up --reload` (hot-reload while you edit). See
+[docs/AUTHORING.md](docs/AUTHORING.md).
+
+> The image above is an illustration. To record a real demo GIF, run
+> `tiles up --echo` and capture the board with any screen recorder.
 
 **Starter board — useful with zero credentials.** Five **instant** tiles work the
 moment a brain is connected: [Ask](tiles/ask), [Summarize](tiles/summarize),

@@ -163,6 +163,19 @@ button { font-family: inherit; }
   display: flex; align-items: baseline; gap: 0.5rem;
 }
 .group-hint { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text-3); }
+.group-manage {
+  margin-left: 0.1rem; background: none; border: none; color: var(--text-3);
+  cursor: pointer; font-size: 0.85rem; padding: 0 0.2rem; opacity: 0; transition: opacity 0.15s;
+}
+.board-group:hover .group-manage { opacity: 1; }
+.group-manage:hover { color: var(--text); }
+
+.btn-danger { color: var(--red); }
+.modal-actions-split { justify-content: space-between; align-items: center; }
+.modal-actions-right { display: flex; gap: 0.6rem; }
+.tile-activity { margin-top: 1rem; }
+.tile-activity .feed { margin-top: 0.4rem; }
+.feed-label { color: var(--text-2); }
 .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 1.6rem 0.6rem; }
 
 /* ---- app icon: graphite glass ---- */

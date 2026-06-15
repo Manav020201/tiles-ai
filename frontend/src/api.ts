@@ -38,7 +38,11 @@ export const api = {
   listConnectors: () => http<Connector[]>("GET", "/api/connectors"),
   createTile: (body: NewTile) => http<Tile>("POST", "/api/tiles", body),
   updateTile: (id: string, body: Partial<NewTile>) => http<Tile>("PUT", `/api/tiles/${id}`, body),
+  removeTile: (id: string) => http<{ deleted: string }>("DELETE", `/api/tiles/${id}`),
   createConnector: (body: NewConnector) => http<Connector>("POST", "/api/connectors", body),
+  updateConnector: (id: string, body: Partial<NewConnector>) =>
+    http<Connector>("PUT", `/api/connectors/${id}`, body),
+  removeConnector: (id: string) => http<{ deleted: string }>("DELETE", `/api/connectors/${id}`),
   introspectConnector: (endpoint: string, env: string[]) =>
     http<ConnectorTool[]>("POST", "/api/connectors/introspect", { endpoint, env }),
 
