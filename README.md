@@ -18,7 +18,8 @@ tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 > any app by its MCP command, manage brains (cloud or Ollama), watch live
 > activity. Plus a real **MCP-backed connector**, app packs (GitHub · Slack · Web
 > Search · local files), instant tiles, and a `tiles` CLI with `--reload`.
-> **163 tests** (148 backend, 15 frontend) and CI on Python 3.11/3.12. See
+> Connectors speak MCP over **stdio or HTTP** (local or remote servers).
+> **167 tests** (152 backend, 15 frontend) and CI on Python 3.11/3.12. See
 > [`SPEC.md`](SPEC.md) for the full spec.
 
 **Docs:** [SPEC.md](SPEC.md) (the contract) · [docs/AUTHORING.md](docs/AUTHORING.md)
@@ -113,8 +114,9 @@ a `mock` connector and a real **MCP-backed** one ship today — and they satisfy
 the same interface, so tiles binding either are identical. The
 [local-files connector](connectors/local-files) is real: it launches an MCP
 server over stdio, and [Ask My Files](tiles/ask-my-files) reads your documents
-through it. Point its `endpoint` at any MCP server (`npx … server-filesystem`,
-GitHub, Slack, …) and the tiles are unchanged.
+through it. Point its `endpoint` at any MCP server and the tiles are unchanged —
+a local launch command (`npx … server-filesystem`) **or** an `http(s)://` URL for
+a remote/hosted server (Streamable HTTP transport, bearer-token auth).
 
 **App packs.** Premade connectors + tiles ship for [GitHub](connectors/github)
 (triage issues, draft a comment), [Slack](connectors/slack) (catch up, draft a
@@ -170,7 +172,7 @@ meant to be read end to end and copied.
 Multi-tile orchestration (the `provides`/`consumes` seam is declared) · scheduled
 / event triggers (activation is manual) · multi-user / hosting / marketplace ·
 real OAuth (env-var credential passthrough ships today; full OAuth is the next
-step) · HTTP/SSE MCP transport (stdio ships today).
+step).
 
 ## Develop
 

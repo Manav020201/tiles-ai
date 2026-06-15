@@ -262,10 +262,15 @@ surface, and subclass `MCPConnector`:
 id: my-app
 app: My App
 kind: mcp
-endpoint: "npx -y @modelcontextprotocol/server-everything"   # any MCP stdio server
+endpoint: "npx -y @modelcontextprotocol/server-everything"   # a local stdio server…
+# endpoint: "https://mcp.example.com/mcp"                     # …or a remote HTTP one
 tools:
   - { name: do_thing, description: "…", side_effect: true }
 ```
+
+The `endpoint` picks the transport automatically: an `http(s)://` URL is a remote
+server (Streamable HTTP; the first `auth.env` var is sent as a bearer token);
+anything else is a local launch command (stdio subprocess).
 
 ```python
 # connectors/my-app/adapter.py

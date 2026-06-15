@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **HTTP MCP transport.** `MCPConnector` now speaks the Streamable HTTP transport
+  to remote/hosted MCP servers (an `http(s)://` endpoint), in addition to local
+  stdio subprocesses. The first declared `auth.env` var is sent as a bearer token.
+  Transport is chosen automatically by the endpoint.
 - **Edit / disconnect an app from the board.** A ⚙ on each connector group opens
   a form to rename it, change its MCP command/env, re-fetch tools, or remove it
   (refused while tiles still use it). `update_connector` / `delete_connector`,

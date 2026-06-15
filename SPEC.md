@@ -231,10 +231,11 @@ for tests/demos. A new hosted provider is added by registering a builder
 
 Now implemented beyond the original v0 line:
 
-- **MCP connectors.** A real `MCPConnector` ships (stdio transport, stdlib
-  JSON-RPC), satisfying the same `Connector` interface as the mock. HTTP/SSE
-  transport is the remaining extension point. The manifest stays the authority on
-  the tool surface + `side_effect`; the live server executes.
+- **MCP connectors.** A real `MCPConnector` ships (stdlib JSON-RPC) over **two
+  transports — stdio (local subprocess) and Streamable HTTP (remote/hosted)** —
+  chosen by the endpoint, satisfying the same `Connector` interface as the mock.
+  The manifest stays the authority on the tool surface + `side_effect`; the live
+  server executes.
 
 ## Build order
 

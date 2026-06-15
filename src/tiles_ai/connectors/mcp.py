@@ -1,9 +1,13 @@
 """A generic MCP-backed connector.
 
 This is the connector the whole "connector = a binding to an app's MCP server"
-thesis rests on. It speaks the Model Context Protocol (JSON-RPC 2.0 over a stdio
-subprocess) using only the standard library — no SDK dependency, same spirit as
-the stdlib model clients.
+thesis rests on. It speaks the Model Context Protocol (JSON-RPC 2.0) using only
+the standard library — no SDK dependency, same spirit as the stdlib model
+clients. Two transports, chosen by the manifest's `endpoint`:
+
+  * **stdio** — a launch command (e.g. `npx -y @modelcontextprotocol/server-x`)
+    run as a local subprocess.
+  * **Streamable HTTP** — an `http(s)://` URL for a remote/hosted MCP server.
 
 Design choices that keep the rest of the system unchanged:
 
@@ -17,10 +21,9 @@ Design choices that keep the rest of the system unchanged:
   * It implements the same `Connector` interface as the mock, so a tile binding
     a mock connector and a tile binding a real MCP connector are byte-identical.
 
-Transport: the connector manifest's `endpoint` is the command line that launches
-the MCP server, e.g. `python3 examples/mcp_servers/files_server.py .`. It is
-shell-split and run as a subprocess. (Launching a configured command is how every
-MCP client works; the command lives in your own manifest.)
+An `http(s)://` endpoint is treated as a remote server (Streamable HTTP); the
+first declared `auth.env` var, if any, is sent as a bearer token. Anything else
+is treated as a stdio launch command, shell-split and run as a subprocess.
 """
 
 from __future__ import annotations
@@ -30,6 +33,8 @@ import contextlib
 import json
 import os
 import shlex
+import urllib.error
+import urllib.request
 from typing import Any
 
 from ..contracts import (
@@ -164,13 +169,114 @@ class StdioMCPClient:
         return " | server stderr: " + " ".join(self._stderr_tail[-3:])
 
 
+class StreamableHttpMCPClient:
+    """A minimal MCP client over the Streamable HTTP transport (stdlib only).
+
+    The client POSTs JSON-RPC to a single endpoint; the server replies with
+    either an `application/json` response or a `text/event-stream` (SSE), and
+    session continuity is carried by the `Mcp-Session-Id` header. This is the
+    remote/hosted counterpart to `StdioMCPClient`, with the same method surface
+    so `MCPConnector` treats them interchangeably.
+    """
+
+    def __init__(self, url: str, *, headers: dict | None = None) -> None:
+        self.url = url
+        self._headers = dict(headers or {})
+        self.session_id: str | None = None
+        self._id = 0
+
+    async def start(self) -> dict:
+        info = await self._request(
+            "initialize",
+            {
+                "protocolVersion": PROTOCOL_VERSION,
+                "capabilities": {},
+                "clientInfo": {"name": "tiles-ai", "version": "0.1.0"},
+            },
+        )
+        await self._notify("notifications/initialized", {})
+        return info
+
+    async def list_tools(self) -> list[dict]:
+        return (await self._request("tools/list", {})).get("tools", [])
+
+    async def call_tool(self, name: str, arguments: dict) -> dict:
+        return await self._request("tools/call", {"name": name, "arguments": arguments or {}})
+
+    async def stop(self) -> None:
+        return None  # stateless over HTTP; the server GCs the session
+
+    def _next_id(self) -> int:
+        self._id += 1
+        return self._id
+
+    async def _request(self, method: str, params: dict) -> dict:
+        req_id = self._next_id()
+        message = {"jsonrpc": "2.0", "id": req_id, "method": method, "params": params}
+        return await asyncio.to_thread(self._post, message, req_id)
+
+    async def _notify(self, method: str, params: dict) -> None:
+        await asyncio.to_thread(
+            self._post, {"jsonrpc": "2.0", "method": method, "params": params}, None
+        )
+
+    def _post(self, message: dict, req_id: int | None) -> dict:
+        body = json.dumps(message).encode("utf-8")
+        req = urllib.request.Request(self.url, data=body, method="POST")
+        req.add_header("content-type", "application/json")
+        req.add_header("accept", "application/json, text/event-stream")
+        for key, value in self._headers.items():
+            req.add_header(key, value)
+        if self.session_id:
+            req.add_header("mcp-session-id", self.session_id)
+        try:
+            with urllib.request.urlopen(req, timeout=_READ_TIMEOUT) as resp:
+                sid = resp.headers.get("mcp-session-id")
+                if sid:
+                    self.session_id = sid
+                if req_id is None:
+                    return {}  # notification: no response expected
+                ctype = (resp.headers.get("content-type") or "").lower()
+                if "text/event-stream" in ctype:
+                    return self._parse_sse(resp, req_id)
+                raw = resp.read()
+                return self._extract(json.loads(raw), req_id) if raw else {}
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")
+            raise MCPError(f"HTTP {exc.code} from {self.url}: {detail}") from exc
+        except urllib.error.URLError as exc:
+            raise MCPError(f"could not reach {self.url}: {exc.reason}") from exc
+
+    def _extract(self, data, req_id: int) -> dict:
+        if isinstance(data, list):  # JSON-RPC batch
+            data = next((d for d in data if d.get("id") == req_id), {})
+        if "error" in data:
+            raise MCPError(f"MCP error: {data['error']}")
+        return data.get("result", {})
+
+    def _parse_sse(self, resp, req_id: int) -> dict:
+        for raw in resp:
+            line = raw.decode("utf-8", "replace").strip()
+            if not line.startswith("data:"):
+                continue
+            try:
+                data = json.loads(line[len("data:") :].strip())
+            except json.JSONDecodeError:
+                continue
+            if isinstance(data, dict) and data.get("id") == req_id:
+                if "error" in data:
+                    raise MCPError(f"MCP error: {data['error']}")
+                return data.get("result", {})
+        raise MCPError(f"no response for request {req_id} in the SSE stream")
+
+
 class MCPConnector(Connector):
     """Connector backed by a live MCP server, driven by its manifest."""
 
     def __init__(self, manifest: ConnectorManifest) -> None:
         super().__init__(manifest.id)
         self.manifest = manifest
-        self._client: StdioMCPClient | None = None
+        self._client: StdioMCPClient | StreamableHttpMCPClient | None = None
 
     @classmethod
     def from_manifest(cls, manifest: ConnectorManifest) -> MCPConnector:
@@ -191,8 +297,17 @@ class MCPConnector(Connector):
                 f"{missing} set before it can connect. Export them and retry."
             )
 
-        command = shlex.split(self.manifest.endpoint)
-        self._client = StdioMCPClient(command)
+        endpoint = self.manifest.endpoint
+        if endpoint.startswith(("http://", "https://")):
+            # Remote MCP server (Streamable HTTP). The first declared env var, if
+            # any, is sent as a bearer token — the common case for hosted servers.
+            headers = {}
+            if auth.env and (token := os.environ.get(auth.env[0])):
+                headers["Authorization"] = f"Bearer {token}"
+            self._client = StreamableHttpMCPClient(endpoint, headers=headers)
+        else:
+            # Local MCP server launched as a subprocess (stdio).
+            self._client = StdioMCPClient(shlex.split(endpoint))
         await self._client.start()
         return Session(connector_id=self.manifest_id, connected=True)
 
