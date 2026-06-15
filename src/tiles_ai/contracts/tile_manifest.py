@@ -87,6 +87,11 @@ class Capability(BaseModel):
 
     name: str = Field(description="Capability slug, e.g. 'email.summary'.")
     description: str = Field(default="", description="One line: what it is.")
+    optional: bool = Field(
+        default=False,
+        description="For a consumed input: if true, the tile can run without it "
+        "(the board won't require the field). Ignored for provides.",
+    )
     schema_ref: dict | None = Field(
         default=None,
         description="Optional JSON Schema describing the payload shape.",

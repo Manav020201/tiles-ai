@@ -58,6 +58,16 @@ All notable changes to this project are documented here. The format follows
   each move queued for your approval). The first *local* side-effect flow, tested
   end to end (propose → approve → files move on disk).
 
+## [0.1.5] - 2026-06-15
+
+### Fixed
+- **Tiles with an optional input can run with the field blank.** Summarize Folder
+  (blank = the connector's root) couldn't be run because the board disabled
+  **Run** whenever a tile declared any input. A consumed input can now be marked
+  `optional: true`; the board shows it as "(optional)" and enables Run with an
+  empty field. `Capability.optional`; `TileSummary.input_optional`; the edit form
+  preserves the flag on save.
+
 ## [0.1.4] - 2026-06-15
 
 ### Added

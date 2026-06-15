@@ -21,6 +21,7 @@ export function makeTile(over: Partial<Tile> = {}): Tile {
     needs_brain: false,
     wants_input: true,
     input_hint: "Ask…",
+    input_optional: false,
     connector_ready: true,
     missing_env: [],
     schedule: null,

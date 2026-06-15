@@ -166,6 +166,17 @@ consumes:
     description: Ask a question…
 ```
 
+Add `optional: true` if the tile can run without the input (the board then shows
+the field as "(optional)" and lets **Run** fire when it's empty — e.g. Summarize
+Folder, where a blank field means "the connector's root"):
+
+```yaml
+consumes:
+  - name: folder
+    description: Folder path (blank = the connector's root)…
+    optional: true
+```
+
 The shipped instant tiles ([ask](../tiles/ask), [summarize](../tiles/summarize),
 [translate](../tiles/translate), [extract](../tiles/extract),
 [brainstorm](../tiles/brainstorm)) are all PromptTile + a manifest — read one and

@@ -42,6 +42,17 @@ def test_list_tiles_includes_references_with_brain_badge():
     assert inbox["brain"]["model"] == "claude-opus-4-8"
 
 
+def test_optional_input_is_flagged_so_the_board_allows_blank():
+    client, _ = _client()
+    by_id = {t["id"]: t for t in client.get("/api/tiles").json()}
+    # summarize-folder declares an optional folder input (blank = root).
+    assert by_id["summarize-folder"]["wants_input"] is True
+    assert by_id["summarize-folder"]["input_optional"] is True
+    # ask-my-files needs its question, so it stays required.
+    assert by_id["ask-my-files"]["wants_input"] is True
+    assert by_id["ask-my-files"]["input_optional"] is False
+
+
 def test_tile_detail_includes_instructions_and_capabilities():
     client, _ = _client()
     detail = client.get("/api/tiles/inbox-summary").json()

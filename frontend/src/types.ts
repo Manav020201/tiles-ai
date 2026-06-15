@@ -22,6 +22,7 @@ export interface Tile {
   needs_brain: boolean;
   wants_input: boolean;
   input_hint: string | null;
+  input_optional: boolean;
   connector_ready: boolean;
   missing_env: string[];
   schedule: string | null;

@@ -54,7 +54,8 @@ export function TileSheet({
   const active = tile.state === "active";
   const blocked = !tile.connector_ready && !active;
   const tint = tile.connector === null ? "tint-instant" : `tint-${tile.permission_tier}`;
-  const runDisabled = busy || (tile.wants_input && input.trim().length === 0);
+  const needsInput = tile.wants_input && !tile.input_optional;
+  const runDisabled = busy || (needsInput && input.trim().length === 0);
 
   function wrap<T>(fn: () => Promise<T>) {
     return async () => {
@@ -192,7 +193,7 @@ export function TileSheet({
             className="sheet-input"
             rows={3}
             value={input}
-            placeholder={tile.input_hint ?? "Input…"}
+            placeholder={(tile.input_hint ?? "Input…") + (tile.input_optional ? " (optional)" : "")}
             onChange={(e) => setInput(e.target.value)}
           />
         )}
@@ -241,7 +242,7 @@ export function TileSheet({
                   key={f}
                   className="btn chain-btn"
                   onClick={() => runChain(f)}
-                  disabled={busy || (tile.wants_input && input.trim().length === 0)}
+                  disabled={runDisabled}
                 >
                   → {prettify(f)}
                 </button>

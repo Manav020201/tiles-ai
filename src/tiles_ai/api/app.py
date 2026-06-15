@@ -148,6 +148,7 @@ def create_app(
             needs_brain = True
         wants_input = len(m.consumes) > 0
         input_hint = (m.consumes[0].description or m.consumes[0].name) if wants_input else None
+        input_optional = wants_input and m.consumes[0].optional
 
         # Connector readiness: which required env vars (if any) aren't set yet.
         missing_env: list[str] = []
@@ -170,6 +171,7 @@ def create_app(
             needs_brain=needs_brain,
             wants_input=wants_input,
             input_hint=input_hint,
+            input_optional=input_optional,
             connector_ready=not missing_env,
             missing_env=missing_env,
             schedule=m.schedule.every if m.schedule else None,

@@ -131,13 +131,14 @@ def update_tile(
             data[key] = changes[key]
     if changes.get("wants_input") is not None:
         if changes["wants_input"]:
-            existing = (data.get("consumes") or [{}])[0].get("description")
-            data["consumes"] = [
-                {
-                    "name": "input",
-                    "description": changes.get("input_hint") or existing or "Type here…",
-                }
-            ]
+            prev = (data.get("consumes") or [{}])[0]
+            entry = {
+                "name": prev.get("name", "input"),
+                "description": changes.get("input_hint") or prev.get("description") or "Type here…",
+            }
+            if prev.get("optional"):  # don't drop an optional input on edit
+                entry["optional"] = True
+            data["consumes"] = [entry]
         else:
             data.pop("consumes", None)
     if changes.get("schedule") is not None:
