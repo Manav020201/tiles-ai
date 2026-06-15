@@ -83,6 +83,7 @@ export interface Connector {
   env?: string[];
   missing_env?: string[];
   oauth?: boolean;
+  oauth_client_id?: string | null;
   authorized?: boolean;
   tools: ConnectorTool[];
 }
@@ -105,6 +106,7 @@ export interface NewConnector {
   kind?: string;
   endpoint?: string | null;
   env?: string[];
+  oauth_client_id?: string;
   tools?: ConnectorTool[];
 }
 

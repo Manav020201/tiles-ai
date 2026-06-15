@@ -19,6 +19,7 @@ export function EditConnectorForm({
   const [envText, setEnvText] = useState("");
   const [tools, setTools] = useState<ConnectorTool[]>([]);
   const [keys, setKeys] = useState<Record<string, string>>({});
+  const [clientId, setClientId] = useState("");
   const [fetching, setFetching] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +33,7 @@ export function EditConnectorForm({
       setEndpoint(c.endpoint ?? "");
       setEnvText((c.env ?? []).join(", "));
       setTools(c.tools);
+      setClientId(c.oauth_client_id ?? "");
     });
   }, [connectorId]);
 
@@ -114,6 +116,7 @@ export function EditConnectorForm({
         app: app.trim(),
         endpoint: isMcp ? endpoint.trim() : undefined,
         env,
+        oauth_client_id: conn?.oauth ? clientId.trim() : undefined,
         tools,
       });
       onChanged();
@@ -172,6 +175,17 @@ export function EditConnectorForm({
               )}
             </div>
           </div>
+        )}
+
+        {conn?.oauth && (
+          <label className="field">
+            <span>OAuth client ID</span>
+            <input
+              value={clientId}
+              placeholder="your-app.apps.googleusercontent.com"
+              onChange={(e) => setClientId(e.target.value)}
+            />
+          </label>
         )}
 
         {conn && (conn.env?.length ?? 0) > 0 && (

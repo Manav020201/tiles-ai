@@ -58,6 +58,29 @@ All notable changes to this project are documented here. The format follows
   each move queued for your approval). The first *local* side-effect flow, tested
   end to end (propose → approve → files move on disk).
 
+## [0.1.6] - 2026-06-15
+
+### Added
+- **Real Gmail, connected from the board.** A new `gmail-live` connector talks to
+  the Gmail REST API with Google OAuth — plus `Inbox Summary (live)` and
+  `Reply Drafter (live)` tiles. Connect it entirely from the UI: paste your OAuth
+  **client ID** and **client secret**, click **Authorize**. (The mock `gmail`
+  stays as the zero-setup demo + the test/reference backbone.) One-time Google
+  Cloud setup is required — see **[docs/GMAIL.md](docs/GMAIL.md)**.
+- **OAuth refresh tokens.** `OAuthConfig.extra_authorize_params` lets a connector
+  request `access_type=offline`; the runtime refreshes an expired access token
+  from the stored refresh token when a tile is activated.
+- **Set an OAuth client ID from the board.** The connector edit form gains an
+  "OAuth client ID" field (`PUT /api/connectors/{id}` `oauth_client_id`).
+
+### Fixed
+- `update_connector` no longer wipes a connector's `oauth` block when its env
+  vars are saved (it merged the auth section instead of replacing it).
+
+> Note: the live Gmail path follows the Gmail v1 API but was not exercised against
+> a real Google account during development; all logic is unit-tested against a
+> fake HTTP layer.
+
 ## [0.1.5] - 2026-06-15
 
 ### Fixed

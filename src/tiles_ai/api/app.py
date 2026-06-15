@@ -212,6 +212,7 @@ def create_app(
             env=m.auth.env,
             missing_env=[e for e in m.auth.env if not os.environ.get(e)],
             oauth=m.auth.oauth is not None,
+            oauth_client_id=m.auth.oauth.client_id if m.auth.oauth else None,
             authorized=tokens.is_authorized(cid),
             tools=[
                 ConnectorToolView(name=t.name, description=t.description, side_effect=t.side_effect)

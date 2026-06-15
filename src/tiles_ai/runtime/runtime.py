@@ -17,11 +17,14 @@ itself — the gate does.
 
 from __future__ import annotations
 
+import os
+import time
 from dataclasses import dataclass
 from typing import Any
 
 from ..contracts import (
     ActionPlan,
+    AuthConfig,
     Connector,
     ConnectorManifest,
     ResolvedBrain,
@@ -32,6 +35,7 @@ from ..contracts import (
 )
 from ..events import Event, EventBus
 from ..model import ModelAdapter
+from ..oauth import OAuthError, refresh_token
 from ..registry import Registry
 from .gate import GateOutcome, PermissionGate
 from .handles import ModelHandle, ToolProxy
@@ -138,6 +142,25 @@ class Runtime:
             raise RuntimeError_(f"no provider '{provider_id}' to pin")
         self._brain_overrides[tile_id] = provider_id
 
+    async def _fresh_access_token(self, connector_id: str, auth: AuthConfig) -> str | None:
+        """Return a usable OAuth access token for a connector, refreshing it via
+        the stored refresh token when it has expired (or is about to)."""
+        token = self.token_store.get(connector_id)
+        if not token:
+            return None
+        expires_at = token.get("expires_at")
+        refresh = token.get("refresh_token")
+        oauth = auth.oauth
+        # Refresh ~1 min before expiry, only if we have what we need to do it.
+        if oauth and refresh and expires_at and time.time() >= float(expires_at) - 60:
+            secret = os.environ.get(oauth.client_secret_env) if oauth.client_secret_env else None
+            try:
+                token = await refresh_token(oauth, refresh=refresh, client_secret=secret)
+                self.token_store.set(connector_id, token)
+            except OAuthError:
+                pass  # fall back to the existing token; the call will fail clearly
+        return token.get("access_token")
+
     # --- lifecycle ---------------------------------------------------------
 
     async def activate(self, tile_id: str) -> ActiveTile:
@@ -167,9 +190,12 @@ class Runtime:
             connector_manifest = lc.manifest
             connector = lc.adapter_cls.from_manifest(lc.manifest)
             # Inject the OAuth access token (if this connector uses OAuth and has
-            # been authorized) so the connector can use it as its bearer.
+            # been authorized) so the connector can use it as its bearer, refreshing
+            # it first if it has expired.
             if self.token_store is not None and hasattr(connector, "access_token"):
-                connector.access_token = self.token_store.access_token(manifest.connector)
+                connector.access_token = await self._fresh_access_token(
+                    manifest.connector, lc.manifest.auth
+                )
             await connector.connect(lc.manifest.auth)
             tools = ToolProxy(
                 tile_id=tile_id,

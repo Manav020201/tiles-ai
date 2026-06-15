@@ -1,0 +1,19 @@
+# Inbox Summary (live) — read_only, over the REAL Gmail connector.
+# Same handler as the demo `inbox-summary`, bound to `gmail-live` instead of the
+# mock. Authorize Gmail (live) from the board first.
+id: live-inbox-summary
+name: Inbox Summary (live)
+description: Summarize my unread Gmail.
+icon: "📬"
+
+connector: gmail-live
+allowed_tools: [list_messages]     # read only
+permission_tier: read_only
+
+instructions: >
+  You summarize an email inbox. Given a list of messages, return three short
+  bullet points covering what needs attention. Be terse.
+
+provides:
+  - name: email.summary
+    description: A short, bulleted summary of the inbox.

@@ -160,12 +160,16 @@ server):**
 > `sample_docs/` by default). To use your own folder: 🔌 `local-files` → ⚙ →
 > change the last argument of the MCP command to your folder's path.
 
-**Gmail — demo (mock) data out of the box, so it works with no key:**
+**Gmail — works two ways:**
 
 | Tile | Tier | What to type |
 |---|---|---|
-| **Inbox Summary** | read only | nothing — summarizes the (mock) inbox |
-| **Reply Drafter** | draft | a short note; it **drafts** a reply and queues it |
+| **Inbox Summary** / **Reply Drafter** | read only / draft | the **mock** — fake data, zero setup, for learning the flow |
+| **Inbox Summary (live)** / **Reply Drafter (live)** | read only / draft | your **real** Gmail via Google OAuth — see [docs/GMAIL.md](docs/GMAIL.md) |
+
+> Real Gmail needs a one-time Google Cloud OAuth app (Google's requirement). After
+> that you connect it entirely from the board: 🔌 **Gmail (live)** → ⚙ → paste the
+> client ID + secret → **Authorize**. Full walkthrough: **[docs/GMAIL.md](docs/GMAIL.md)**.
 
 **Web search — needs a free [Brave API key](https://brave.com/search/api) + Node:**
 
@@ -358,6 +362,7 @@ Check with `tiles --version` and `pip show tiles-ai`. Upgrade with
 
 - **[SPEC.md](SPEC.md)** — the design and the tile contract
 - **[docs/AUTHORING.md](docs/AUTHORING.md)** — build a tile or a connector
+- **[docs/GMAIL.md](docs/GMAIL.md)** — connect your real Gmail (Google OAuth)
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — dev setup and how to help
 - **[CHANGELOG.md](CHANGELOG.md)** — what's new
 

@@ -1,0 +1,47 @@
+# Gmail (live) — a REAL connector over the Gmail REST API with Google OAuth.
+#
+# This is the real counterpart to the `gmail` mock (which stays as the
+# zero-setup demo). Bind tiles here to read/send your actual mail.
+#
+# One-time setup (Google's requirement — see docs/GMAIL.md):
+#   1. Create an OAuth client (type: Web application) in Google Cloud Console.
+#   2. Enable the Gmail API and add this redirect URI:
+#        http://127.0.0.1:8000/api/oauth/callback
+#   3. From the board (🔌 → ⚙ on "Gmail (live)"): paste your client id into
+#      "OAuth client ID", paste the client secret into GOOGLE_CLIENT_SECRET
+#      under API keys, then click Authorize.
+#
+# Tokens are stored locally in oauth.local.yaml (gitignored), never here.
+id: gmail-live
+app: Gmail (live)
+kind: custom
+
+auth:
+  scheme: oauth2
+  env: [GOOGLE_CLIENT_SECRET]   # paste the client secret here, from the board
+  oauth:
+    authorize_url: https://accounts.google.com/o/oauth2/v2/auth
+    token_url: https://oauth2.googleapis.com/token
+    client_id: YOUR_GOOGLE_OAUTH_CLIENT_ID    # set this from the board
+    client_secret_env: GOOGLE_CLIENT_SECRET
+    scopes:
+      - https://www.googleapis.com/auth/gmail.readonly
+      - https://www.googleapis.com/auth/gmail.send
+    extra_authorize_params:       # ask Google for a refresh token
+      access_type: offline
+      prompt: consent
+
+tools:
+  - name: list_messages
+    description: List recent unread messages in the inbox.
+    side_effect: false          # a read — safe for read_only tiles
+  - name: send_message
+    description: Send an email.
+    side_effect: true           # touches the world — gated behind approval
+    input_schema:
+      type: object
+      properties:
+        to: { type: string }
+        subject: { type: string }
+        body: { type: string }
+      required: [to, body]

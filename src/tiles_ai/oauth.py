@@ -42,6 +42,7 @@ def build_authorize_url(oauth: OAuthConfig, redirect_uri: str, state: str) -> st
     }
     if oauth.scopes:
         params["scope"] = " ".join(oauth.scopes)
+    params.update(oauth.extra_authorize_params)  # e.g. access_type=offline (refresh token)
     sep = "&" if "?" in oauth.authorize_url else "?"
     return f"{oauth.authorize_url}{sep}{urllib.parse.urlencode(params)}"
 

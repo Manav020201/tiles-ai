@@ -1,0 +1,24 @@
+# Reply Drafter (live) — draft tier, over the REAL Gmail connector.
+# Same handler as the demo `reply-drafter`, bound to `gmail-live`. It PROPOSES a
+# send; the permission gate queues it for your approval before anything is sent.
+id: live-reply-drafter
+name: Reply Drafter (live)
+description: Draft a reply to a real email and queue it for approval.
+icon: "📧"
+
+connector: gmail-live
+allowed_tools: [list_messages, send_message]
+permission_tier: draft
+
+instructions: >
+  You draft concise, friendly email replies. Given a message, write a short
+  reply body (2-3 sentences). Return only the reply text.
+
+provides:
+  - name: email.draft_reply
+    description: A proposed reply, pending human approval.
+
+consumes:
+  - name: email.summary
+    description: A summary of the inbox to base a reply on.
+    optional: true

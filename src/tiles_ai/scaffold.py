@@ -185,7 +185,17 @@ def update_connector(root: str | Path, connector_id: str, changes: dict) -> Path
         data["endpoint"] = changes["endpoint"]
     if changes.get("env") is not None:
         env = list(changes["env"])
-        data["auth"] = {"scheme": "api_key" if env else "none", "env": env}
+        auth = data.get("auth") or {}
+        auth["env"] = env
+        if not auth.get("oauth"):  # preserve an OAuth block; don't reset its scheme
+            auth["scheme"] = "api_key" if env else "none"
+        data["auth"] = auth
+    if changes.get("oauth_client_id") is not None:
+        auth = data.get("auth") or {}
+        if not auth.get("oauth"):
+            raise ScaffoldError(f"connector '{connector_id}' has no OAuth config.")
+        auth["oauth"]["client_id"] = changes["oauth_client_id"]
+        data["auth"] = auth
     if changes.get("tools") is not None:
         data["tools"] = [
             {

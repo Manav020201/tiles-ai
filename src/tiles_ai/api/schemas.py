@@ -156,6 +156,7 @@ class ConnectorView(BaseModel):
     env: list[str] = []  # env var names this connector needs
     missing_env: list[str] = []  # of those, the ones with no value set yet
     oauth: bool = False  # the connector declares an OAuth flow
+    oauth_client_id: str | None = None  # the OAuth client id (public; editable)
     authorized: bool = False  # a token has been stored
     tools: list[ConnectorToolView]
 
@@ -179,6 +180,7 @@ class UpdateConnectorRequest(BaseModel):
     app: str | None = None
     endpoint: str | None = None
     env: list[str] | None = None
+    oauth_client_id: str | None = None  # set the OAuth client id (for oauth2 connectors)
     tools: list[ConnectorToolView] | None = None
 
 

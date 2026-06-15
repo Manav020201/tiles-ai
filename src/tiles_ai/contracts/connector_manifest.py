@@ -53,6 +53,14 @@ class OAuthConfig(BaseModel):
         default=None, description="Env var holding the client secret (local only)."
     )
     scopes: list[str] = Field(default_factory=list)
+    extra_authorize_params: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Extra query params for the authorize URL, e.g. "
+            "{'access_type': 'offline', 'prompt': 'consent'} to get a refresh token "
+            "from Google."
+        ),
+    )
 
 
 class AuthConfig(BaseModel):
