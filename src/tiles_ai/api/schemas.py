@@ -131,6 +131,26 @@ class ConnectorView(BaseModel):
     tools: list[ConnectorToolView]
 
 
+class CreateConnectorRequest(BaseModel):
+    app: str
+    id: str | None = None  # derived from app if omitted
+    kind: str = "mcp"  # mcp | mock
+    endpoint: str | None = None  # MCP server command (required for kind=mcp)
+    env: list[str] = []  # names of env vars the server needs
+    tools: list[ConnectorToolView] = []
+
+
+class IntrospectRequest(BaseModel):
+    endpoint: str
+    env: list[str] = []
+
+
+class LoadErrorView(BaseModel):
+    kind: str  # "connector" | "tile"
+    source: str
+    errors: list[str]
+
+
 class CreateTileRequest(BaseModel):
     name: str
     id: str | None = None  # derived from name if omitted

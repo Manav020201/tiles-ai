@@ -9,7 +9,7 @@ the tile contract.
 
 from __future__ import annotations
 
-from .mcp import MCPConnector, MCPError, StdioMCPClient
+from .mcp import MCPConnector, MCPError, StdioMCPClient, introspect
 from .mock import MockConnector
 
-__all__ = ["MockConnector", "MCPConnector", "MCPError", "StdioMCPClient"]
+__all__ = ["MockConnector", "MCPConnector", "MCPError", "StdioMCPClient", "introspect"]

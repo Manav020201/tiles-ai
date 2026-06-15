@@ -97,6 +97,21 @@ button { font-family: inherit; }
 .brand { font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em; }
 .brand-mark { color: var(--green); margin-right: 0.45rem; font-size: 0.85em; }
 .brain-summary { color: var(--text-2); font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; }
+.icon-btn {
+  background: var(--fill); border: none; color: var(--text-2);
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+  font-size: 0.95rem; line-height: 1; box-shadow: var(--inset-top);
+  transition: transform 0.3s, color 0.15s;
+}
+.icon-btn:hover { color: var(--text); }
+.icon-btn:active { transform: rotate(180deg); }
+
+.panel-issues { border: 0.5px solid rgba(255, 159, 10, 0.3); }
+.issue-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.issue { background: var(--fill-2); border-radius: 12px; padding: 0.7rem 0.8rem; }
+.issue-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
+.issue-source { font-weight: 600; font-size: 0.86rem; }
+.issue-msg { color: var(--text-2); font-size: 0.8rem; line-height: 1.45; }
 
 /* ---- layout ---- */
 .layout {

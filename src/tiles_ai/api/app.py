@@ -21,6 +21,8 @@ from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .. import __version__
+from ..connectors import MCPError
+from ..connectors import introspect as introspect_mcp
 from ..contracts import (
     BrainResolutionError,
     HostedProvider,
@@ -33,15 +35,24 @@ from ..events import Event, EventBus
 from ..model import BrainStore, ModelAdapter
 from ..registry import Registry
 from ..runtime import Runtime, RuntimeError_
-from ..scaffold import ScaffoldError, build_manifest, scaffold_tile, slugify
+from ..scaffold import (
+    ScaffoldError,
+    build_manifest,
+    scaffold_connector,
+    scaffold_tile,
+    slugify,
+)
 from .schemas import (
     AddProviderRequest,
     ApprovalView,
     BrainView,
     ConnectorToolView,
     ConnectorView,
+    CreateConnectorRequest,
     CreateTileRequest,
     ExecutedView,
+    IntrospectRequest,
+    LoadErrorView,
     PinBrainRequest,
     ProviderView,
     QueuedView,
@@ -154,26 +165,69 @@ def create_app(
     def list_tiles() -> list[TileSummary]:
         return [_tile_summary(tid) for tid in sorted(registry.tiles)]
 
+    def _connector_view(cid: str) -> ConnectorView:
+        m = registry.connectors[cid].manifest
+        return ConnectorView(
+            id=m.id,
+            app=m.app,
+            kind=m.kind.value,
+            tools=[
+                ConnectorToolView(name=t.name, description=t.description, side_effect=t.side_effect)
+                for t in m.tools
+            ],
+        )
+
     @app.get("/api/connectors", response_model=list[ConnectorView])
     def list_connectors() -> list[ConnectorView]:
         # Lets the board's "create tile" form offer a connector + its tools.
-        views = []
-        for cid in sorted(registry.connectors):
-            m = registry.connectors[cid].manifest
-            views.append(
-                ConnectorView(
-                    id=m.id,
-                    app=m.app,
-                    kind=m.kind.value,
-                    tools=[
-                        ConnectorToolView(
-                            name=t.name, description=t.description, side_effect=t.side_effect
-                        )
-                        for t in m.tools
-                    ],
-                )
+        return [_connector_view(cid) for cid in sorted(registry.connectors)]
+
+    @app.post("/api/connectors/introspect", response_model=list[ConnectorToolView])
+    async def introspect_connector(body: IntrospectRequest) -> list[ConnectorToolView]:
+        # Launch an MCP server and read its tools so the form can prefill them.
+        try:
+            tools = await introspect_mcp(body.endpoint, body.env)
+        except MCPError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return [
+            ConnectorToolView(name=t.name, description=t.description, side_effect=t.side_effect)
+            for t in tools
+        ]
+
+    @app.post("/api/connectors", response_model=ConnectorView, status_code=201)
+    def create_connector(body: CreateConnectorRequest) -> ConnectorView:
+        cid = body.id or slugify(body.app)
+        try:
+            scaffold_connector(
+                root,
+                id=cid,
+                app=body.app,
+                kind=body.kind,
+                endpoint=body.endpoint,
+                env=body.env,
+                tools=[t.model_dump() for t in body.tools],
             )
-        return views
+        except ScaffoldError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        registry.rescan(root)
+        return _connector_view(cid)
+
+    @app.get("/api/errors", response_model=list[LoadErrorView])
+    def list_errors() -> list[LoadErrorView]:
+        # Surfaced on the board so a tile/connector that failed to load says why.
+        return [
+            LoadErrorView(kind=e.kind, source=e.source, errors=e.errors) for e in registry.errors
+        ]
+
+    @app.post("/api/reload")
+    def reload_board() -> dict:
+        # Re-scan connectors/ and tiles/ from disk (after editing files).
+        registry.rescan(root)
+        return {
+            "connectors": len(registry.connectors),
+            "tiles": len(registry.tiles),
+            "errors": len(registry.errors),
+        }
 
     @app.post("/api/tiles", response_model=TileSummary, status_code=201)
     def create_tile(body: CreateTileRequest) -> TileSummary:

@@ -7,6 +7,13 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Connect an app from the board.** A "🔌 New app" form takes an MCP server
+  command, **introspects its tools live** (`POST /api/connectors/introspect` →
+  `MCPConnector` → `live_tools`), and scaffolds the connector — which is then
+  available to bind tiles to. `scaffold_connector` + `POST /api/connectors`.
+- **Errors surfaced on the board.** An "Issues" panel shows tiles/connectors
+  that failed to load and why (`GET /api/errors`); a **⟳ rescan** button
+  (`POST /api/reload`) re-discovers from disk after you edit files.
 - **Create tiles from the board.** A "＋ New tile" form scaffolds a tile
   (manifest + handler) from the UI; the registry re-scans and the tile appears
   live — no restart. Backed by a shared `tiles_ai.scaffold` module (also behind

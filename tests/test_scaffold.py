@@ -3,7 +3,13 @@
 import pytest
 
 from tiles_ai.registry import Registry
-from tiles_ai.scaffold import ScaffoldError, class_name, scaffold_tile, slugify
+from tiles_ai.scaffold import (
+    ScaffoldError,
+    class_name,
+    scaffold_connector,
+    scaffold_tile,
+    slugify,
+)
 
 
 def test_slugify():
@@ -61,3 +67,35 @@ def test_scaffold_rejects_invalid_manifest(tmp_path):
         scaffold_tile(tmp_path, id="bad", name="Bad", permission_tier="superpowers")
     # nothing written on failure
     assert not (tmp_path / "tiles" / "bad").exists()
+
+
+def test_scaffold_mcp_connector_loads(tmp_path):
+    scaffold_connector(
+        tmp_path,
+        id="myapp",
+        app="My App",
+        kind="mcp",
+        endpoint="npx -y some-mcp-server",
+        env=["MYAPP_TOKEN"],
+        tools=[{"name": "do_read", "description": "r", "side_effect": False}],
+    )
+    folder = tmp_path / "connectors" / "myapp"
+    assert "MCPConnector" in (folder / "adapter.py").read_text()
+    reg = Registry.discover(tmp_path)
+    assert reg.ok, reg.report()
+    conn = reg.connectors["myapp"]
+    assert conn.manifest.kind.value == "mcp"
+    assert conn.manifest.auth.env == ["MYAPP_TOKEN"]
+
+
+def test_scaffold_mock_connector_loads(tmp_path):
+    scaffold_connector(
+        tmp_path, id="fake", app="Fake", kind="mock", tools=[{"name": "x", "side_effect": False}]
+    )
+    assert "MockConnector" in (tmp_path / "connectors" / "fake" / "adapter.py").read_text()
+    assert Registry.discover(tmp_path).ok
+
+
+def test_scaffold_connector_requires_endpoint_for_mcp(tmp_path):
+    with pytest.raises(ScaffoldError, match="endpoint"):
+        scaffold_connector(tmp_path, id="x", app="X", kind="mcp")

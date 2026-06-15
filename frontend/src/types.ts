@@ -91,3 +91,17 @@ export interface NewTile {
   wants_input?: boolean;
   input_hint?: string | null;
 }
+
+export interface NewConnector {
+  app: string;
+  kind?: string;
+  endpoint?: string | null;
+  env?: string[];
+  tools?: ConnectorTool[];
+}
+
+export interface LoadError {
+  kind: string;
+  source: string;
+  errors: string[];
+}

@@ -3,6 +3,9 @@
 import type {
   Approval,
   Connector,
+  ConnectorTool,
+  LoadError,
+  NewConnector,
   NewTile,
   Provider,
   RunResponse,
@@ -34,6 +37,12 @@ export const api = {
   getTile: (id: string) => http<TileDetail>("GET", `/api/tiles/${id}`),
   listConnectors: () => http<Connector[]>("GET", "/api/connectors"),
   createTile: (body: NewTile) => http<Tile>("POST", "/api/tiles", body),
+  createConnector: (body: NewConnector) => http<Connector>("POST", "/api/connectors", body),
+  introspectConnector: (endpoint: string, env: string[]) =>
+    http<ConnectorTool[]>("POST", "/api/connectors/introspect", { endpoint, env }),
+
+  listErrors: () => http<LoadError[]>("GET", "/api/errors"),
+  reload: () => http<{ connectors: number; tiles: number; errors: number }>("POST", "/api/reload"),
   activate: (id: string) => http<Tile>("POST", `/api/tiles/${id}/activate`),
   deactivate: (id: string) => http<Tile>("POST", `/api/tiles/${id}/deactivate`),
   run: (id: string, input: unknown) => http<RunResponse>("POST", `/api/tiles/${id}/run`, { input }),

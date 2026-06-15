@@ -1,5 +1,6 @@
 """API integration tests over the real board, with an offline (echo) brain."""
 
+import sys
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -9,6 +10,7 @@ from tiles_ai.contracts import HostedProvider
 from tiles_ai.model import BrainStore, ModelAdapter, echo_client_factory
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+SERVER = REPO_ROOT / "examples" / "mcp_servers" / "files_server.py"
 
 
 def _client(with_default=True):
@@ -195,7 +197,7 @@ def _tmp_client(tmp_path):
         "from tiles_ai.connectors import MockConnector\n\n\nclass A(MockConnector):\n    pass\n",
         encoding="utf-8",
     )
-    (tmp_path / "tiles").mkdir()
+    (tmp_path / "tiles").mkdir(exist_ok=True)
     store = BrainStore()
     store.add_provider(
         HostedProvider(id="c", provider="anthropic", api_key="k", model="claude-opus-4-8"),
@@ -260,6 +262,68 @@ def test_create_tile_rejects_duplicate(tmp_path):
     client, _ = _tmp_client(tmp_path)
     assert client.post("/api/tiles", json={"name": "Dup"}).status_code == 201
     assert client.post("/api/tiles", json={"name": "Dup"}).status_code == 400
+
+
+def test_introspect_mcp_server_returns_tools(tmp_path):
+    client, _ = _tmp_client(tmp_path)
+    resp = client.post(
+        "/api/connectors/introspect",
+        json={"endpoint": f"{sys.executable} {SERVER} {tmp_path}"},
+    )
+    assert resp.status_code == 200
+    tools = {t["name"]: t for t in resp.json()}
+    assert "list_dir" in tools and tools["list_dir"]["side_effect"] is False
+    assert tools["move_file"]["side_effect"] is True  # from readOnlyHint=false
+
+
+def test_create_connector_then_tile_on_it(tmp_path):
+    client, root = _tmp_client(tmp_path)
+    # Connect a new app (mcp), then a tile that binds it — all from the API.
+    created = client.post(
+        "/api/connectors",
+        json={
+            "app": "Notes",
+            "kind": "mcp",
+            "endpoint": "npx -y notes-mcp",
+            "env": ["NOTES_TOKEN"],
+            "tools": [{"name": "search", "description": "s", "side_effect": False}],
+        },
+    )
+    assert created.status_code == 201 and created.json()["id"] == "notes"
+    assert "notes" in {c["id"] for c in client.get("/api/connectors").json()}
+
+    tile = client.post(
+        "/api/tiles",
+        json={"name": "Note Search", "connector": "notes", "allowed_tools": ["search"]},
+    )
+    assert tile.status_code == 201 and tile.json()["connector"] == "notes"
+    assert (root / "connectors" / "notes" / "adapter.py").is_file()
+
+
+def test_errors_endpoint_surfaces_broken_tiles(tmp_path):
+    # A tile whose manifest is invalid -> registry records it -> /api/errors shows it.
+    broken = tmp_path / "tiles" / "oops"
+    broken.mkdir(parents=True)
+    (broken / "manifest.yaml").write_text(
+        "id: oops\nname: Oops\n", encoding="utf-8"
+    )  # missing fields
+    (broken / "handler.py").write_text("x = 1\n", encoding="utf-8")
+    client, _ = _tmp_client(tmp_path)
+    errors = client.get("/api/errors").json()
+    assert any(e["source"] == "oops" for e in errors)
+
+
+def test_reload_endpoint_picks_up_a_new_tile(tmp_path):
+    client, root = _tmp_client(tmp_path)
+    before = {t["id"] for t in client.get("/api/tiles").json()}
+    # Write a new tile directly to disk, then reload.
+    from tiles_ai.scaffold import scaffold_tile
+
+    scaffold_tile(root, id="added-later", name="Added Later")
+    assert "added-later" not in {t["id"] for t in client.get("/api/tiles").json()}  # not yet
+    client.post("/api/reload")
+    after = {t["id"] for t in client.get("/api/tiles").json()}
+    assert "added-later" in after and "added-later" not in before
 
 
 def test_events_endpoint_receives_activation_event():

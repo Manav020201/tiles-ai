@@ -128,7 +128,8 @@ class MyTile(Tile):
 
 …or skip the editor entirely: click **＋ New tile** on the board, fill a short
 form, and it's scaffolded and live instantly — then open the generated
-`handler.py` to go deeper.
+`handler.py` to go deeper. To wire up a new app, **🔌 New app** takes an MCP
+server command, reads its tools automatically, and scaffolds the connector.
 
 Full walkthrough — including adding a connector — in
 [docs/AUTHORING.md](docs/AUTHORING.md). The two reference tiles

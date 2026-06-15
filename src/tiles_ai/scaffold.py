@@ -13,7 +13,7 @@ from pathlib import Path
 
 import yaml
 
-from .contracts import TileManifest
+from .contracts import ConnectorManifest, TileManifest
 from .contracts.ids import SLUG_PATTERN
 
 
@@ -97,6 +97,70 @@ def _handler_source(manifest: dict) -> str:
         "        )\n"
         "        return ActionPlan(result=answer)\n"
     )
+
+
+def scaffold_connector(
+    root: str | Path,
+    *,
+    id: str,
+    app: str,
+    kind: str = "mcp",
+    endpoint: str | None = None,
+    env: list[str] | None = None,
+    tools: list[dict] | None = None,
+) -> Path:
+    """Validate + write a new connector folder under `<root>/connectors/<id>/`.
+
+    `kind="mcp"` scaffolds an `MCPConnector` subclass pointed at `endpoint`;
+    `kind="mock"` scaffolds a `MockConnector`. The tool surface (with side_effect
+    flags) is the authority the gate trusts. Raises ScaffoldError on a bad id,
+    collision, or invalid manifest (nothing is written then).
+    """
+    if not re.match(SLUG_PATTERN, id):
+        raise ScaffoldError(f"'{id}' is not a valid id (lowercase letters/digits, - or _).")
+
+    manifest: dict = {"id": id, "app": app, "kind": kind}
+    if kind == "mcp":
+        if not endpoint:
+            raise ScaffoldError("an MCP connector needs an endpoint command.")
+        manifest["endpoint"] = endpoint
+    if env:
+        manifest["auth"] = {"scheme": "api_key", "env": list(env)}
+    manifest["tools"] = [
+        {
+            "name": t["name"],
+            "description": t.get("description", ""),
+            "side_effect": bool(t.get("side_effect")),
+        }
+        for t in (tools or [])
+    ]
+
+    try:
+        ConnectorManifest.model_validate(manifest)
+    except Exception as exc:
+        raise ScaffoldError(f"invalid connector: {exc}") from exc
+
+    folder = Path(root) / "connectors" / id
+    if folder.exists():
+        raise ScaffoldError(f"a connector named '{id}' already exists.")
+
+    base = "MCPConnector" if kind == "mcp" else "MockConnector"
+    folder.mkdir(parents=True)
+    (folder / "manifest.yaml").write_text(
+        yaml.safe_dump(manifest, sort_keys=False, allow_unicode=True), encoding="utf-8"
+    )
+    (folder / "adapter.py").write_text(
+        f'"""{app} connector. Generated; the logic lives in {base}."""\n\n'
+        f"from tiles_ai.connectors import {base}\n\n\n"
+        f"class {class_name(id)}({base}):\n"
+        f'    """Edit manifest.yaml to change the tool surface or endpoint."""\n',
+        encoding="utf-8",
+    )
+    (folder / "README.md").write_text(
+        f"# {app} connector\n\nGenerated from Tiles AI. See docs/AUTHORING.md.\n",
+        encoding="utf-8",
+    )
+    return folder
 
 
 def scaffold_tile(root: str | Path, **fields) -> Path:

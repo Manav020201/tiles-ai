@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
-import type { Approval, Provider, Tile, TilesEvent } from "./types";
+import type { Approval, LoadError, Provider, Tile, TilesEvent } from "./types";
 import { Onboarding } from "./components/Onboarding";
 import { TileIcon } from "./components/TileIcon";
 import { TileSheet } from "./components/TileSheet";
 import { Approvals } from "./components/Approvals";
 import { ActivityFeed } from "./components/ActivityFeed";
 import { NewTileForm } from "./components/NewTileForm";
+import { AddConnectorForm } from "./components/AddConnectorForm";
+import { Issues } from "./components/Issues";
 import { groupTiles } from "./lib/grouping";
 
 export function App() {
@@ -14,19 +16,28 @@ export function App() {
   const [tiles, setTiles] = useState<Tile[]>([]);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [events, setEvents] = useState<TilesEvent[]>([]);
+  const [errors, setErrors] = useState<LoadError[]>([]);
   const [openTileId, setOpenTileId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [addingApp, setAddingApp] = useState(false);
 
   const refresh = useCallback(async () => {
-    const [t, a, p] = await Promise.all([
+    const [t, a, p, e] = await Promise.all([
       api.listTiles(),
       api.listApprovals(),
       api.listProviders(),
+      api.listErrors(),
     ]);
     setTiles(t);
     setApprovals(a);
     setProviders(p);
+    setErrors(e);
   }, []);
+
+  const rescan = useCallback(async () => {
+    await api.reload();
+    refresh();
+  }, [refresh]);
 
   useEffect(() => {
     refresh();
@@ -82,11 +93,12 @@ export function App() {
           <span className="brand-mark">▦</span> Tiles AI
         </div>
         <div className="brain-summary">
+          <button className="icon-btn" onClick={rescan} title="Re-scan tiles & connectors from disk">
+            ⟳
+          </button>
           Brain:{" "}
           {defaultProvider ? (
-            <span className="pill pill-brain">
-              {defaultProvider.model}
-            </span>
+            <span className="pill pill-brain">{defaultProvider.model}</span>
           ) : (
             <span className="pill pill-warn">no default</span>
           )}
@@ -126,11 +138,22 @@ export function App() {
                 </button>
                 <span className="app-label">New tile</span>
               </div>
+              <div className="app-cell">
+                <button
+                  className="app-icon add-icon"
+                  onClick={() => setAddingApp(true)}
+                  title="Connect a new application"
+                >
+                  🔌
+                </button>
+                <span className="app-label">New app</span>
+              </div>
             </div>
           </div>
         </section>
 
         <aside className="sidebar">
+          <Issues errors={errors} />
           <Approvals approvals={approvals} onChanged={refresh} />
           <ActivityFeed events={events} />
         </aside>
@@ -147,6 +170,10 @@ export function App() {
 
       {creating && (
         <NewTileForm onClose={() => setCreating(false)} onCreated={refresh} />
+      )}
+
+      {addingApp && (
+        <AddConnectorForm onClose={() => setAddingApp(false)} onCreated={refresh} />
       )}
     </div>
   );

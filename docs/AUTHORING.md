@@ -198,6 +198,12 @@ If your tile is missing, it failed validation — the reason is in the server lo
 
 You only need this when your tile talks to an app no existing connector covers.
 
+**The fastest way: connect it from the board.** Click **🔌 New app**, paste the
+app's MCP server command (e.g. `npx -y @modelcontextprotocol/server-github`) and
+any required env var names, then **Fetch tools** — Tiles launches the server,
+reads its tool surface, and scaffolds the connector. It's then in the New Tile
+form's app picker. Everything below is what that generates, by hand.
+
 ### 1. The folder
 
 ```

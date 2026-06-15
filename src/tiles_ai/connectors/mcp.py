@@ -256,3 +256,26 @@ def _content_text(content: list[dict]) -> Any:
     """Flatten MCP tool-result content blocks to text (the common case)."""
     parts = [block.get("text", "") for block in content if block.get("type") == "text"]
     return "\n".join(parts) if parts else content
+
+
+async def introspect(endpoint: str, env: list[str] | None = None) -> list[ToolSpec]:
+    """Launch an MCP server and read its tool surface — for authoring a connector.
+
+    Powers the board's "connect an app" flow: paste the server command, and we
+    return its tools (with `side_effect` derived from each tool's readOnlyHint).
+    Raises MCPError if the server can't start or a required env var is unset.
+    """
+    manifest = ConnectorManifest(
+        id="introspect",
+        app="introspect",
+        kind="mcp",
+        endpoint=endpoint,
+        auth=AuthConfig(env=list(env or [])),
+        tools=[],
+    )
+    connector = MCPConnector.from_manifest(manifest)
+    await connector.connect(AuthConfig(env=list(env or [])))
+    try:
+        return await connector.live_tools()
+    finally:
+        await connector.disconnect()
