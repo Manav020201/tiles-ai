@@ -27,7 +27,9 @@ board and add your own tiles right from the screen.
 
 ## Quick start
 
-You'll need **Python 3.11+**. The board ships pre-built in the package:
+You'll need **Python 3.11+**. The board ships pre-built in the package.
+
+**macOS / Linux:**
 
 ```bash
 pipx install tiles-ai      # or: pip install tiles-ai
@@ -39,6 +41,68 @@ offline brain (no API key needed). The first run drops the starter tiles and
 connectors into the current folder (so you can edit them); run `tiles init`
 yourself to seed a board without starting the server. When you're ready for a
 real model, run `tiles up` and connect a brain from the screen.
+
+<details>
+<summary><strong>🪟 Windows — step-by-step (start here if you're new)</strong></summary>
+
+Do these in order. Commands are for **PowerShell** (Start menu → type
+"PowerShell" → Enter).
+
+**1. Install Python 3.11 or newer**
+- Get it from [python.org/downloads/windows](https://www.python.org/downloads/windows/)
+  (or the Microsoft Store).
+- On the **first installer screen, tick “Add python.exe to PATH”**, then click
+  Install. (This one checkbox saves a lot of pain.)
+- Check it worked — in a *new* PowerShell window:
+  ```powershell
+  python --version
+  ```
+  You should see `Python 3.11.x` (or higher).
+
+**2. Install Tiles into its own folder (a “virtual environment”)**
+This keeps Tiles separate from the rest of your system.
+```powershell
+python -m venv $HOME\tiles-env
+$HOME\tiles-env\Scripts\pip install --upgrade pip tiles-ai
+```
+
+**3. Run it**
+```powershell
+mkdir $HOME\tiles-demo; cd $HOME\tiles-demo
+$HOME\tiles-env\Scripts\tiles up --echo
+```
+Now open **http://127.0.0.1:8000** in your browser. Press **Ctrl + C** in
+PowerShell to stop it.
+
+**4. Switch to a real model**
+Stop it (Ctrl + C), then run **without** `--echo`:
+```powershell
+$HOME\tiles-env\Scripts\tiles up
+```
+On the board click **Settings (🧠)** and paste your API key (Anthropic or
+OpenAI). It’s saved on your machine and used for every tile.
+
+**Tip — type `tiles` instead of the full path.** “Activate” the environment first:
+```powershell
+$HOME\tiles-env\Scripts\Activate.ps1
+tiles up
+```
+If PowerShell says running scripts is disabled, run this once, then try again:
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+(Prefer the old Command Prompt? Use `tiles-env\Scripts\activate.bat` instead.)
+
+**Two Windows-specific gotchas**
+- **The “Local files” tiles** (Summarize Folder, Ask My Files, …) launch a helper
+  with `python3`, which Windows usually calls just `python`. Fix it once on the
+  board: 🔌 **local-files → ⚙**, and in the **MCP server command** change
+  `python3` to `python`. Point it at a Windows path, e.g.
+  `python examples\mcp_servers\files_server.py C:\Users\You\Documents`.
+- **Connector API keys** (like a Brave key): easiest is to paste them right on the
+  board (tap the tile → paste). If you’d rather use the terminal, in PowerShell
+  it’s `$env:BRAVE_API_KEY="your-key"` *before* `tiles up` (not `export`).
+</details>
 
 <details>
 <summary>From source (to hack on Tiles itself)</summary>
