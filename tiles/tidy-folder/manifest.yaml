@@ -16,6 +16,7 @@ instructions: >
 consumes:
   - name: folder
     description: Folder path (blank = the connector's root)…
+    optional: true
 
 provides:
   - name: files.tidy_plan

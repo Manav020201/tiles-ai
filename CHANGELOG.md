@@ -58,6 +58,13 @@ All notable changes to this project are documented here. The format follows
   each move queued for your approval). The first *local* side-effect flow, tested
   end to end (propose → approve → files move on disk).
 
+## [0.1.8] - 2026-06-15
+
+### Fixed
+- **Tidy Folder runs with a blank field.** Like Summarize Folder, its `folder`
+  input is "blank = the connector's root", but the manifest wasn't marked
+  `optional` — so the board kept Run disabled. Marked it optional.
+
 ## [0.1.7] - 2026-06-15
 
 ### Fixed
