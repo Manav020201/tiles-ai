@@ -11,11 +11,14 @@ tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 
 ![Tiles AI — a home screen for your AI agents](docs/hero.svg)
 
-> **Status: v0.1.0.** The contract, registry/loader, runtime stack, permission
-> gate + approval queue, FastAPI control plane with an SSE stream, and the
-> iOS-style React board are all in — plus a real **MCP-backed connector**, app
-> packs (GitHub · Slack · Web Search), instant tiles, and a `tiles` CLI. **122
-> tests** (107 backend, 15 frontend) and CI on Python 3.11/3.12. See
+> **Status: v0.1.0** (unreleased work on `main`). The whole stack is in: the tile
+> contract, registry, runtime + permission gate + approval queue, a FastAPI
+> control plane with an SSE stream, and an iOS-style React board you can author
+> **entirely from the UI** — create / edit / delete tiles and connectors, connect
+> any app by its MCP command, manage brains (cloud or Ollama), watch live
+> activity. Plus a real **MCP-backed connector**, app packs (GitHub · Slack · Web
+> Search · local files), instant tiles, and a `tiles` CLI with `--reload`.
+> **163 tests** (148 backend, 15 frontend) and CI on Python 3.11/3.12. See
 > [`SPEC.md`](SPEC.md) for the full spec.
 
 **Docs:** [SPEC.md](SPEC.md) (the contract) · [docs/AUTHORING.md](docs/AUTHORING.md)
@@ -57,10 +60,32 @@ smart, no API keys: [Ask My Files](tiles/ask-my-files),
 folders and moves them only after you approve each one. (App packs like Gmail,
 GitHub, Slack, and Web Search add more once you provide a token.)
 
-API endpoints: `GET /api/tiles`, `POST /api/tiles/{id}/{activate,deactivate,run}`,
-`PUT /api/tiles/{id}/brain`, `GET /api/approvals`, `POST /api/approvals/{id}/resolve`,
-`GET/POST /api/providers`, `POST /api/providers/{id}/test`, `PUT /api/brain/default`,
-and `GET /api/events` (SSE). See [`frontend/`](frontend/) for the board.
+## Build agents without leaving the board
+
+The board is the on-ramp to agent engineering — every authoring action is in the UI:
+
+- **＋ New tile** — fill a short form; the tile is scaffolded (`manifest.yaml` +
+  `handler.py`) and appears live, no restart. Open the generated handler to go deeper.
+- **🔌 New app** — paste an app's MCP server command; Tiles launches it, reads its
+  tools automatically, and scaffolds the connector. It's then bindable by any tile.
+- **Edit / delete** — tap a tile to edit its manifest or delete it; ⚙ a connector
+  group to rename it, re-fetch tools, or disconnect (refused while tiles use it).
+- **🧠 Brains** — add a cloud LLM or a local Ollama model, set the default, or test
+  it, any time — not just first-launch onboarding.
+- **Run · approve · observe** — tap to run; `draft` actions queue for approval;
+  each tile shows its recent activity; tiles/connectors that fail to load surface
+  their reason inline.
+- **Hot reload** — `tiles up --reload` re-discovers as you edit files (`*.py` and
+  `*.yaml`), or hit the ⟳ button.
+
+Prefer code? Everything above is just folders under `tiles/` and `connectors/` —
+see [docs/AUTHORING.md](docs/AUTHORING.md).
+
+**API.** The board is a thin client over a REST + SSE API (interactive docs at
+`/docs`): tiles (list, create / edit / delete, activate / run / deactivate, pin a
+brain), connectors (list, introspect, create / edit / delete), approvals,
+providers (add / remove / test, set default), `GET /api/errors`, `POST /api/reload`,
+and `GET /api/events` (SSE).
 
 ## Why it exists
 
@@ -68,8 +93,9 @@ and `GET /api/events` (SSE). See [`frontend/`](frontend/) for the board.
   minimal, inspectable spec every tile satisfies.
 - **Permissions are first-class.** Every tile declares a permission tier. Any
   real-world side effect defaults to human-in-the-loop. Green ≠ unsupervised.
-- **Connect the brain once.** Configure an LLM provider once (hosted API or a
-  local endpoint like Ollama); every tile uses it by default.
+- **Connect the brain once.** Configure an LLM once (hosted API or a local
+  endpoint like Ollama); every tile uses it by default. Manage brains any time
+  from the 🧠 panel; a tile can pin its own.
 - **Inspectability is the win.** Read one reference tile end to end, copy the
   folder, implement one interface, done.
 
@@ -132,12 +158,9 @@ class MyTile(Tile):
         return ActionPlan(result=answer)                     # propose side effects, don't do them
 ```
 
-…or skip the editor entirely: click **＋ New tile** on the board, fill a short
-form, and it's scaffolded and live instantly — then open the generated
-`handler.py` to go deeper. To wire up a new app, **🔌 New app** takes an MCP
-server command, reads its tools automatically, and scaffolds the connector.
-
-Full walkthrough — including adding a connector — in
+…or skip the editor and do it from the board (see
+[above](#build-agents-without-leaving-the-board)) — the form generates exactly
+this. Full walkthrough, including adding a connector, in
 [docs/AUTHORING.md](docs/AUTHORING.md). The two reference tiles
 ([inbox-summary](tiles/inbox-summary), [reply-drafter](tiles/reply-drafter)) are
 meant to be read end to end and copied.
