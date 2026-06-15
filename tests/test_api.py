@@ -237,7 +237,10 @@ def test_connector_secrets_set_from_the_board(tmp_path, monkeypatch):
     assert (tmp_path / "secrets.local.yaml").exists()  # written to the board, not the repo
 
     # An env var the connector doesn't declare is rejected.
-    assert client.put("/api/connectors/demo/secrets", json={"values": {"NOPE": "x"}}).status_code == 400
+    assert (
+        client.put("/api/connectors/demo/secrets", json={"values": {"NOPE": "x"}}).status_code
+        == 400
+    )
 
     cleared = client.delete("/api/connectors/demo/secrets/TILES_TEST_BRAVE_KEY").json()
     assert cleared["missing_env"] == ["TILES_TEST_BRAVE_KEY"]
