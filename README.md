@@ -103,23 +103,171 @@ Connectors talk to apps over [MCP](https://modelcontextprotocol.io) (stdio or
 HTTP). The full design is in [SPEC.md](SPEC.md).
 </details>
 
-## Make your own tile
+## Using the board — a complete guide
 
-The easy way: click **➕ New tile** on the board, fill the form, and open the
-generated `handler.py` to customize.
+### Reading the board
 
-In code, a tile is a small folder with a manifest and one method:
+Tiles are grouped by the app they use (**Instant**, **Local-files**, **Gmail**,
+**Web-search**, …). Each icon tells you its state at a glance:
 
-```python
-from tiles_ai.contracts import ActionPlan, Tile
+- **Green icon** — the tile is *active* (running / listening).
+- **🔒 lock badge** — the tile needs something before it can run (usually an API
+  key); tap it to add one.
+- The top bar has **🧠** (choose your model), **⟳** (rescan after editing files),
+  and an **Issues** panel if any tile failed to load.
 
-class MyTile(Tile):
-    async def run(self, input, context) -> ActionPlan:
-        answer = await context.model.complete(str(input))
-        return ActionPlan(result=answer)
-```
+Tap any tile to open its **sheet** — that's where everything happens.
 
-Full guide, including how to connect a new app: **[docs/AUTHORING.md](docs/AUTHORING.md)**.
+### The basic loop (every tile works this way)
+
+1. **Tap** the tile → its sheet slides up.
+2. **Toggle "Running"** on (the icon turns green). "Green = running, not
+   unsupervised."
+3. If the tile takes input, a box appears — **type your input** (some are
+   optional; the box says so).
+4. Press **Run**. The result shows under **Last run**.
+5. For **draft** tiles, anything that writes/sends is **not** done immediately —
+   it's queued for your approval (see [Approvals](#approvals-draft-tiles)).
+
+A tile's badges show its **permission tier** (`read only` / `draft` /
+`autonomous`) and which **brain** it uses.
+
+### The tile catalog
+
+What every starter tile does, what to type, and what it needs.
+
+**Instant — work immediately, only need a model (no app, no keys):**
+
+| Tile | What to type |
+|---|---|
+| **Ask** | any question |
+| **Summarize** | text to condense |
+| **Translate** | text — optionally prefix `to spanish:` to pick a language |
+| **Extract** | messy text → pulls out people, dates, tasks, links |
+| **Brainstorm** | a topic or problem to riff on |
+
+**Local files — read/organize a folder. No API key, no Node (a bundled Python
+server):**
+
+| Tile | Tier | What to type |
+|---|---|---|
+| **Ask My Files** | read only | a question about your documents |
+| **Find Files** | read only | a filename or keyword |
+| **Summarize Folder** | read only | *(optional)* a subfolder — blank = the whole folder |
+| **Tidy Folder** | draft | *(optional)* a folder — it **proposes** moving files into type subfolders; you approve each move |
+
+> These read the folder the **local-files** connector points at (the bundled
+> `sample_docs/` by default). To use your own folder: 🔌 `local-files` → ⚙ →
+> change the last argument of the MCP command to your folder's path.
+
+**Gmail — demo (mock) data out of the box, so it works with no key:**
+
+| Tile | Tier | What to type |
+|---|---|---|
+| **Inbox Summary** | read only | nothing — summarizes the (mock) inbox |
+| **Reply Drafter** | draft | a short note; it **drafts** a reply and queues it |
+
+**Web search — needs a free [Brave API key](https://brave.com/search/api) + Node:**
+
+| Tile | What to type |
+|---|---|
+| **Web Search** | what to search for |
+| **Research** | a question — answered with web sources |
+
+**GitHub — needs a `GITHUB_PERSONAL_ACCESS_TOKEN` + Node:**
+
+| Tile | Tier | What to type |
+|---|---|---|
+| **GitHub Triage** | read only | `owner/repo` (e.g. `octocat/hello-world`) |
+| **GitHub Comment** | draft | `owner/repo#issue: what to say` — drafted, queued |
+
+**Slack — needs `SLACK_BOT_TOKEN` + `SLACK_TEAM_ID` + Node:**
+
+| Tile | Tier | What to type |
+|---|---|---|
+| **What did I miss** | read only | a channel name or id |
+| **Message Drafter** | draft | `#channel: what to say` — drafted, queued |
+
+> Tiles needing a key show 🔒 until you add one. Tap the tile and paste the key
+> right there (or 🔌 → ⚙ → **API keys**). Keys are saved to `secrets.local.yaml`
+> (gitignored) and never leave your machine. The GitHub/Slack/Web-search apps run
+> via `npx`, so they need **Node 18+** installed.
+
+### Approvals (draft tiles)
+
+A `draft` tile never writes to the outside world on its own. When it wants to
+(send an email, comment on an issue, move a file), it **proposes** the action and
+it lands in the **Approvals** queue. You review the exact action and **Approve**
+or **Reject** — nothing happens until you do. This is the core safety guarantee.
+
+### Schedule & chain
+
+- **Schedule** — give a tile a `Run every` interval (e.g. `15m`) in its New/Edit
+  form and it runs on a timer; the sheet shows a ⏱ badge.
+- **Chain** — in a tile's sheet, the **Chain** section offers compatible tiles to
+  pipe into. Run one, then feed its output straight into another (e.g. *Inbox
+  Summary → Reply Drafter*).
+
+### Choosing your model (🧠)
+
+Click **🧠** in the top bar to open **Brains**. Add a **cloud** model (Anthropic
+or OpenAI — paste your API key) or a **local** one (Ollama), set a **default**,
+and **Test** it. Every tile uses the default unless it pins its own. Keys are
+saved in `brain.local.yaml` (gitignored). *(Running with `tiles up --echo` forces
+an offline demo brain and ignores real keys — use plain `tiles up` for real
+models.)*
+
+---
+
+## Create a tile (from the board)
+
+1. Click **➕ New tile**.
+2. Fill the form:
+   - **Name** + **icon** + one-line **description**.
+   - **Instructions** — the agent's system prompt ("You summarize… cite the
+     source… if unknown, say so").
+   - **Permission tier** — `read only` (never writes), `draft` (proposes, you
+     approve), or `autonomous`.
+   - **App** *(optional)* — bind to a connector and pick which of its tools the
+     tile may use. Leave blank for an **instant** tile (model only).
+   - **Input** / **Run every** *(optional)*.
+3. **Create** — Tiles scaffolds `tiles/<id>/` (manifest + handler + README) and
+   the tile appears on the board immediately.
+4. **Go deeper:** open `tiles/<id>/handler.py` and edit `run`. A tile is a small
+   folder with a manifest and one method:
+
+   ```python
+   from tiles_ai.contracts import ActionPlan, Tile
+
+   class MyTile(Tile):
+       async def run(self, input, context) -> ActionPlan:
+           answer = await context.model.complete(str(input))
+           return ActionPlan(result=answer)
+   ```
+
+   `context.tools.call(...)` reads through your connector (allow-listed,
+   read-only); to write, return a `ProposedAction` and the gate handles approval.
+   Full field-by-field reference: **[docs/AUTHORING.md](docs/AUTHORING.md)**.
+
+## Connect a new app (from the board)
+
+For any app with an [MCP](https://modelcontextprotocol.io) server (local or
+remote):
+
+1. Click **🔌 New app**.
+2. Paste the **MCP server command** (e.g.
+   `npx -y @modelcontextprotocol/server-github`) — or an `http(s)://` URL for a
+   remote server — and the names of any **env vars** it needs (e.g.
+   `GITHUB_PERSONAL_ACCESS_TOKEN`).
+3. Click **Fetch tools** — Tiles launches the server and reads its tool surface.
+   Each tool has a **"writes"** checkbox: leave it checked for tools that change
+   the world (send, post, delete) and unchecked for reads. *This flag is
+   safety-critical — the permission gate trusts it.*
+4. **Save** — the connector is scaffolded and now appears in the New Tile form's
+   app picker.
+5. **Add its key** — open the connector (🔌 → ⚙ → **API keys**) and paste the
+   value, or paste it from any tile that shows 🔒. For OAuth apps, use
+   **Authorize** instead. Edit or remove a connector anytime from the same ⚙.
 
 ## Troubleshooting
 
