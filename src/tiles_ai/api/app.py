@@ -34,7 +34,7 @@ from ..contracts import (
     validate_tile_against_connector,
 )
 from ..events import Event, EventBus
-from ..model import BrainStore, ModelAdapter
+from ..model import BrainStore, ModelAdapter, ModelClientError
 from ..oauth import OAuthError, TokenStore, build_authorize_url, exchange_code
 from ..registry import Registry
 from ..runtime import Runtime, RuntimeError_, Scheduler
@@ -413,6 +413,8 @@ def create_app(
             raise HTTPException(404, str(exc)) from exc
         except BrainResolutionError as exc:
             raise HTTPException(409, str(exc)) from exc
+        except ModelClientError as exc:
+            raise HTTPException(502, f"model call failed: {exc}") from exc
         return FlowRunResponse(
             steps=[
                 FlowStepView(
@@ -475,6 +477,12 @@ def create_app(
             outcome = await runtime.run(tile_id, body.input if body else None)
         except RuntimeError_ as exc:
             raise HTTPException(409, str(exc)) from exc  # not active
+        except BrainResolutionError as exc:
+            raise HTTPException(409, str(exc)) from exc  # no brain configured
+        except ModelClientError as exc:
+            # Upstream model failure (rate limit, overload, auth, network) after
+            # retries — a clean 502 the board can show, not a 500 traceback.
+            raise HTTPException(502, f"model call failed: {exc}") from exc
         return RunResponse(
             tile_id=outcome.tile_id,
             result=outcome.result,

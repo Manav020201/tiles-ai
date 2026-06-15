@@ -129,8 +129,24 @@ class OpenAIClient:
         return str(choices[0].get("message", {}).get("content", "")).strip()
 
 
+# Transient upstream failures worth retrying: rate limits (429), provider
+# overload (529, e.g. Anthropic), and gateway/unavailable (5xx). A 4xx like 401
+# (bad key) or 400 (bad request) is permanent — fail fast, don't retry.
+_RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504, 529})
+_MAX_ATTEMPTS = 4
+
+
+def _backoff_seconds(attempt: int) -> float:
+    """Exponential backoff: 0.5s, 1s, 2s before the final give-up."""
+    return 0.5 * (2**attempt)
+
+
 async def _post_json(url: str, payload: dict, *, headers: dict | None = None) -> dict:
-    """POST JSON and parse JSON back, off the event loop. stdlib only."""
+    """POST JSON and parse JSON back, off the event loop. stdlib only.
+
+    Transient upstream errors (rate limit / overload / 5xx) are retried a few
+    times with exponential backoff before surfacing as a ModelClientError.
+    """
 
     def _do() -> dict:
         body = json.dumps(payload).encode("utf-8")
@@ -138,13 +154,22 @@ async def _post_json(url: str, payload: dict, *, headers: dict | None = None) ->
         req.add_header("content-type", "application/json")
         for k, v in (headers or {}).items():
             req.add_header(k, v)
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+    last: ModelClientError | None = None
+    for attempt in range(_MAX_ATTEMPTS):
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                return json.loads(resp.read().decode("utf-8"))
+            return await asyncio.to_thread(_do)
         except urllib.error.HTTPError as exc:  # surface the server's message
             detail = exc.read().decode("utf-8", "replace")
-            raise ModelClientError(f"HTTP {exc.code} from {url}: {detail}") from exc
+            last = ModelClientError(f"HTTP {exc.code} from {url}: {detail}")
+            if exc.code not in _RETRYABLE_STATUS or attempt == _MAX_ATTEMPTS - 1:
+                raise last from exc
         except urllib.error.URLError as exc:
-            raise ModelClientError(f"could not reach {url}: {exc.reason}") from exc
+            last = ModelClientError(f"could not reach {url}: {exc.reason}")
+            if attempt == _MAX_ATTEMPTS - 1:
+                raise last from exc
+        await asyncio.sleep(_backoff_seconds(attempt))
 
-    return await asyncio.to_thread(_do)
+    raise last  # pragma: no cover - loop always returns or raises above

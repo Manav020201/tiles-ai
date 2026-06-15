@@ -189,6 +189,16 @@ explicitly instead of reporting a false "working".)
 </details>
 
 <details>
+<summary><strong>A tile fails with "model call failed" / HTTP 529 / 502</strong></summary>
+
+`529 Overloaded` (and `429`, `503`) are **transient errors from the model
+provider**, not a Tiles bug — your key is working, the provider is just busy.
+Tiles retries these automatically with backoff; if it still fails, wait a few
+seconds and run the tile again. A persistent `401`/`403` instead means a bad or
+unauthorized API key — re-check it in **Settings (🧠)**.
+</details>
+
+<details>
 <summary><strong>I have an old version installed</strong></summary>
 
 Check with `tiles --version` and `pip show tiles-ai`. Upgrade with

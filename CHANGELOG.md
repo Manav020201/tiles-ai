@@ -58,6 +58,20 @@ All notable changes to this project are documented here. The format follows
   each move queued for your approval). The first *local* side-effect flow, tested
   end to end (propose → approve → files move on disk).
 
+## [0.1.3] - 2026-06-15
+
+### Added
+- **Automatic retry on transient model errors.** Model calls now retry with
+  exponential backoff (0.5s → 1s → 2s, 4 attempts) on rate-limit / overload /
+  5xx responses (429, 500, 502, 503, 504, 529) — so a momentary provider
+  overload no longer fails a tile run. Permanent errors (e.g. 401 bad key) still
+  fail fast.
+
+### Fixed
+- **Model failures return a clean 502, not a 500 traceback.** A `run` (or flow)
+  that hits an upstream model error after retries now surfaces a readable
+  "model call failed: …" the board can show, instead of an ASGI stack trace.
+
 ## [0.1.2] - 2026-06-15
 
 ### Fixed

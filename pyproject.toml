@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tiles-ai"
-version = "0.1.2"
+version = "0.1.3"
 description = "Tiles AI — a phone-home-screen control plane for AI agents. Register, activate, observe, and permission tiles."
 readme = "README.md"
 license = { text = "MIT" }

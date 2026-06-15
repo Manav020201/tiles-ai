@@ -97,6 +97,32 @@ def test_run_before_activate_is_409():
     assert client.post("/api/tiles/inbox-summary/run", json={}).status_code == 409
 
 
+def test_model_failure_returns_clean_502():
+    # An upstream model error (e.g. Anthropic 529 after retries) must surface as a
+    # clean 502, not a 500 traceback.
+    from tiles_ai.model import ModelClientError
+
+    class _FailingClient:
+        async def complete(self, prompt, *, system=None):
+            raise ModelClientError("HTTP 529 from api.anthropic.com: Overloaded")
+
+    store = BrainStore()
+    store.add_provider(
+        HostedProvider(id="cloud", provider="anthropic", api_key="sk", model="claude-opus-4-8"),
+        make_default=True,
+    )
+    app = create_app(
+        root=REPO_ROOT,
+        brain_store=store,
+        model_adapter=ModelAdapter(store, client_factory=lambda r, c: _FailingClient()),
+    )
+    client = TestClient(app)
+    client.post("/api/tiles/ask/activate")
+    resp = client.post("/api/tiles/ask/run", json={"input": "hi"})
+    assert resp.status_code == 502
+    assert "529" in resp.json()["detail"]
+
+
 def test_activate_without_default_brain_is_409():
     client, _ = _client(with_default=False)
     resp = client.post("/api/tiles/inbox-summary/activate")
