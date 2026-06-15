@@ -277,6 +277,9 @@ class MCPConnector(Connector):
         super().__init__(manifest.id)
         self.manifest = manifest
         self._client: StdioMCPClient | StreamableHttpMCPClient | None = None
+        # Set by the runtime from the OAuth token store before connect, when the
+        # connector uses scheme=oauth2. Used as the HTTP bearer.
+        self.access_token: str | None = None
 
     @classmethod
     def from_manifest(cls, manifest: ConnectorManifest) -> MCPConnector:
@@ -299,11 +302,17 @@ class MCPConnector(Connector):
 
         endpoint = self.manifest.endpoint
         if endpoint.startswith(("http://", "https://")):
-            # Remote MCP server (Streamable HTTP). The first declared env var, if
-            # any, is sent as a bearer token — the common case for hosted servers.
-            headers = {}
-            if auth.env and (token := os.environ.get(auth.env[0])):
-                headers["Authorization"] = f"Bearer {token}"
+            # Remote MCP server (Streamable HTTP). Bearer comes from an OAuth token
+            # (set by the runtime) if present, else the first declared env var.
+            bearer = self.access_token
+            if not bearer and auth.env:
+                bearer = os.environ.get(auth.env[0])
+            if auth.scheme == "oauth2" and not bearer:
+                raise MCPError(
+                    f"connector '{self.manifest_id}' needs OAuth authorization — "
+                    "connect it from the board first."
+                )
+            headers = {"Authorization": f"Bearer {bearer}"} if bearer else {}
             self._client = StreamableHttpMCPClient(endpoint, headers=headers)
         else:
             # Local MCP server launched as a subprocess (stdio).

@@ -18,8 +18,9 @@ tile can wrap LangGraph, CrewAI, the OpenAI Agents SDK, or plain Python.
 > any app by its MCP command, manage brains (cloud or Ollama), watch live
 > activity. Plus a real **MCP-backed connector**, app packs (GitHub · Slack · Web
 > Search · local files), instant tiles, and a `tiles` CLI with `--reload`.
-> Connectors speak MCP over **stdio or HTTP** (local or remote servers).
-> **167 tests** (152 backend, 15 frontend) and CI on Python 3.11/3.12. See
+> Connectors speak MCP over **stdio or HTTP**; tiles can **chain** (provides →
+> consumes), run on a **schedule**, and connect via **OAuth** or env vars.
+> **180 tests** (165 backend, 15 frontend) and CI on Python 3.11/3.12. See
 > [`SPEC.md`](SPEC.md) for the full spec.
 
 **Docs:** [SPEC.md](SPEC.md) (the contract) · [docs/AUTHORING.md](docs/AUTHORING.md)
@@ -169,10 +170,10 @@ meant to be read end to end and copied.
 
 ## Not built yet (seams left for later)
 
-Multi-tile orchestration (the `provides`/`consumes` seam is declared) · scheduled
-/ event triggers (activation is manual) · multi-user / hosting / marketplace ·
-real OAuth (env-var credential passthrough ships today; full OAuth is the next
-step).
+Richer multi-tile graphs (sequential `provides`→`consumes` flows ship; branching
+/ fan-out later) · cron & event triggers (interval scheduling ships) · OAuth
+refresh-token rotation (the authorization-code flow ships) · multi-user / hosting
+/ marketplace.
 
 ## Develop
 

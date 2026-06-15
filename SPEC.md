@@ -225,9 +225,10 @@ for tests/demos. A new hosted provider is added by registering a builder
   `provides`/`consumes`; nothing consumes them yet.
 - **Scheduled / event triggers.** v0 activation is manual only.
 - **Multi-user, accounts, hosted deployment, marketplace.**
-- **Real OAuth.** Reference tiles use mock side effects / simple keys. `AuthConfig`
-  is the declared hook for real auth — including credential/env injection for MCP
-  servers that need it.
+- **Real OAuth.** Now implemented: connectors declare `auth.oauth` (an OAuth 2.0
+  authorization-code config); the board runs the flow and stores the token in
+  `oauth.local.yaml` (gitignored); the runtime injects it as the connector's
+  bearer. Refresh-token rotation is the remaining extension.
 
 Now implemented beyond the original v0 line:
 

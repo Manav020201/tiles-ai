@@ -7,6 +7,12 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Real OAuth.** Connectors can declare an OAuth 2.0 authorization-code flow
+  (`auth.oauth`); the board runs authorize → callback → token exchange and stores
+  the access token in `oauth.local.yaml` (gitignored). The runtime injects it as
+  the connector's bearer. `GET /api/connectors/{id}/oauth/start`,
+  `GET /api/oauth/callback`, `POST /api/connectors/{id}/oauth/disconnect`; the
+  connector edit form gains Authorize / Reauthorize / Revoke.
 - **Scheduled triggers.** A tile can declare `schedule: { every: "5m" }` to run
   automatically on an interval. A `Scheduler` (wired into the API lifespan) reads
   the registry each tick and runs due tiles; `GET /api/schedules`; the create/edit

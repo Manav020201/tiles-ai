@@ -272,6 +272,20 @@ The `endpoint` picks the transport automatically: an `http(s)://` URL is a remot
 server (Streamable HTTP; the first `auth.env` var is sent as a bearer token);
 anything else is a local launch command (stdio subprocess).
 
+For a hosted server that needs **OAuth**, declare it under `auth` — the board runs
+the flow (Authorize on the connector's edit form) and stores the token locally:
+
+```yaml
+auth:
+  scheme: oauth2
+  oauth:
+    authorize_url: https://provider.com/oauth/authorize
+    token_url: https://provider.com/oauth/token
+    client_id: your-client-id
+    client_secret_env: PROVIDER_CLIENT_SECRET   # local env var, optional
+    scopes: [read, write]
+```
+
 ```python
 # connectors/my-app/adapter.py
 from tiles_ai.connectors import MCPConnector

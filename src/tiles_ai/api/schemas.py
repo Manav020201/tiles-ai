@@ -153,6 +153,8 @@ class ConnectorView(BaseModel):
     kind: str
     endpoint: str | None = None
     env: list[str] = []
+    oauth: bool = False  # the connector declares an OAuth flow
+    authorized: bool = False  # a token has been stored
     tools: list[ConnectorToolView]
 
 

@@ -25,6 +25,7 @@ from .connector_manifest import (
     AuthConfig,
     ConnectorKind,
     ConnectorManifest,
+    OAuthConfig,
     ToolSpec,
 )
 from .lifecycle import (
@@ -71,6 +72,7 @@ __all__ = [
     "ConnectorManifest",
     "ConnectorKind",
     "AuthConfig",
+    "OAuthConfig",
     "ToolSpec",
     "TileManifest",
     "ModelRef",

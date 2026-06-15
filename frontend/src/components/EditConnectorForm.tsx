@@ -37,6 +37,26 @@ export function EditConnectorForm({
   const env = envText.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
   const isMcp = conn?.kind === "mcp";
 
+  async function authorize() {
+    setError(null);
+    try {
+      const { authorize_url } = await api.oauthStart(connectorId);
+      window.open(authorize_url, "_blank", "width=600,height=720");
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    }
+  }
+
+  async function disconnectOAuth() {
+    try {
+      const updated = await api.oauthDisconnect(connectorId);
+      setConn(updated);
+      onChanged();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    }
+  }
+
   async function refetch() {
     setFetching(true);
     setError(null);
@@ -95,6 +115,31 @@ export function EditConnectorForm({
           <div className="sheet-title">Edit {conn?.app ?? connectorId}</div>
         </div>
         <p className="sheet-desc">Edit the connection, re-read its tools, or disconnect it.</p>
+
+        {conn?.oauth && (
+          <div className="row">
+            <div>
+              <div className="row-label">OAuth</div>
+              <div className="row-sub">
+                {conn.authorized ? (
+                  <span className="test-ok">✓ authorized</span>
+                ) : (
+                  "not connected"
+                )}
+              </div>
+            </div>
+            <div className="row-actions">
+              <button className="btn btn-sm" onClick={authorize}>
+                {conn.authorized ? "Reauthorize" : "Authorize"}
+              </button>
+              {conn.authorized && (
+                <button className="btn btn-sm btn-reject" onClick={disconnectOAuth}>
+                  Revoke
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {!conn ? (
           <p className="empty">Loading…</p>

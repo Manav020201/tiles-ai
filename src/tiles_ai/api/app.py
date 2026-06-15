@@ -14,11 +14,12 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .. import __version__
@@ -34,6 +35,7 @@ from ..contracts import (
 )
 from ..events import Event, EventBus
 from ..model import BrainStore, ModelAdapter
+from ..oauth import OAuthError, TokenStore, build_authorize_url, exchange_code
 from ..registry import Registry
 from ..runtime import Runtime, RuntimeError_, Scheduler
 from ..scaffold import (
@@ -84,14 +86,17 @@ def create_app(
     root: str | Path | None = None,
     brain_store: BrainStore | None = None,
     model_adapter: ModelAdapter | None = None,
+    token_store: TokenStore | None = None,
 ) -> FastAPI:
     root = Path(root) if root else Path.cwd()
     registry = Registry.discover(root)
     store = brain_store or BrainStore()
     adapter = model_adapter or ModelAdapter(store)
+    tokens = token_store or TokenStore.load(root / "oauth.local.yaml")
     bus = EventBus()
-    runtime = Runtime(registry, adapter, events=bus)
+    runtime = Runtime(registry, adapter, events=bus, token_store=tokens)
     scheduler = Scheduler(runtime)
+    oauth_states: dict[str, str] = {}  # short-lived: state -> connector id
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -108,6 +113,7 @@ def create_app(
     app.state.bus = bus
     app.state.runtime = runtime
     app.state.scheduler = scheduler
+    app.state.tokens = tokens
 
     # --- helpers -----------------------------------------------------------
 
@@ -196,6 +202,8 @@ def create_app(
             kind=m.kind.value,
             endpoint=m.endpoint,
             env=m.auth.env,
+            oauth=m.auth.oauth is not None,
+            authorized=tokens.is_authorized(cid),
             tools=[
                 ConnectorToolView(name=t.name, description=t.description, side_effect=t.side_effect)
                 for t in m.tools
@@ -260,9 +268,56 @@ def create_app(
             raise HTTPException(
                 409, f"'{connector_id}' is used by tiles {bound} — remove those first."
             )
+        tokens.remove(connector_id)
         delete_connector(root, connector_id)
         registry.rescan(root)
         return {"deleted": connector_id}
+
+    # --- OAuth (authorization-code) ----------------------------------------
+
+    @app.get("/api/connectors/{connector_id}/oauth/start")
+    def oauth_start(connector_id: str, request: Request) -> dict:
+        lc = registry.get_connector(connector_id)
+        if lc is None:
+            raise HTTPException(404, f"no connector '{connector_id}'")
+        oauth = lc.manifest.auth.oauth
+        if oauth is None:
+            raise HTTPException(400, f"connector '{connector_id}' has no OAuth config")
+        state = secrets.token_urlsafe(24)
+        oauth_states[state] = connector_id
+        redirect_uri = str(request.base_url).rstrip("/") + "/api/oauth/callback"
+        return {"authorize_url": build_authorize_url(oauth, redirect_uri, state)}
+
+    @app.get("/api/oauth/callback", response_class=HTMLResponse)
+    async def oauth_callback(
+        request: Request, code: str = "", state: str = "", error: str = ""
+    ) -> str:
+        if error:
+            return f"<p>Authorization failed: {error}. You can close this window.</p>"
+        connector_id = oauth_states.pop(state, None)
+        if connector_id is None:
+            raise HTTPException(400, "invalid or expired OAuth state")
+        lc = registry.get_connector(connector_id)
+        if lc is None or lc.manifest.auth.oauth is None:
+            raise HTTPException(404, "connector no longer has OAuth config")
+        oauth = lc.manifest.auth.oauth
+        secret = os.environ.get(oauth.client_secret_env) if oauth.client_secret_env else None
+        redirect_uri = str(request.base_url).rstrip("/") + "/api/oauth/callback"
+        try:
+            token = await exchange_code(
+                oauth, code=code, redirect_uri=redirect_uri, client_secret=secret
+            )
+        except OAuthError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        tokens.set(connector_id, token)
+        return f"<p>Connected <b>{lc.manifest.app}</b>. You can close this window.</p>"
+
+    @app.post("/api/connectors/{connector_id}/oauth/disconnect", response_model=ConnectorView)
+    def oauth_disconnect(connector_id: str) -> ConnectorView:
+        if registry.get_connector(connector_id) is None:
+            raise HTTPException(404, f"no connector '{connector_id}'")
+        tokens.remove(connector_id)
+        return _connector_view(connector_id)
 
     @app.get("/api/errors", response_model=list[LoadErrorView])
     def list_errors() -> list[LoadErrorView]:

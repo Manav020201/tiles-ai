@@ -73,11 +73,13 @@ class Runtime:
         *,
         gate: PermissionGate | None = None,
         events: EventBus | None = None,
+        token_store: Any = None,
     ) -> None:
         self.registry = registry
         self.model = model
         self.gate = gate or PermissionGate()
         self.events = events
+        self.token_store = token_store  # OAuth TokenStore (optional)
         self._active: dict[str, ActiveTile] = {}
         # Per-tile brain overrides set from the UI (tile_id -> provider id). These
         # are session state, not manifest data, so they live here rather than on
@@ -164,6 +166,10 @@ class Runtime:
                 )
             connector_manifest = lc.manifest
             connector = lc.adapter_cls.from_manifest(lc.manifest)
+            # Inject the OAuth access token (if this connector uses OAuth and has
+            # been authorized) so the connector can use it as its bearer.
+            if self.token_store is not None and hasattr(connector, "access_token"):
+                connector.access_token = self.token_store.access_token(manifest.connector)
             await connector.connect(lc.manifest.auth)
             tools = ToolProxy(
                 tile_id=tile_id,

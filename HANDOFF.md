@@ -44,8 +44,8 @@ CI gates (must stay green — `.github/workflows/ci.yml`):
 - `pytest` (backend, Python 3.11 & 3.12)
 - frontend `npm run test` + `npm run build`
 
-Current counts: **152 backend + 15 frontend tests** (as of the HTTP-transport
-commit). Run `pytest -q` and `npm --prefix frontend run test`.
+Current counts: **165 backend + 15 frontend tests**. Run `pytest -q` and
+`npm --prefix frontend run test`.
 
 ## Architecture & layout
 
@@ -143,9 +143,13 @@ docs/           AUTHORING.md, hero.svg.
 
 - `Connector.from_manifest` factory; `RunContext.tools`/`.model` handles (raw
   connector removed for safety).
-- `AuthConfig.env` (env var names a connector needs → bearer/passthrough).
+- `AuthConfig.env` (env var names a connector needs → bearer/passthrough);
+  `AuthConfig.oauth` (`OAuthConfig`) for the OAuth flow.
 - `ModelRef`/brain override resolution; `register_hosted_client`.
 - `RunContext` carries no secrets.
+- `Schedule` + `TileManifest.schedule` (interval triggers).
+- `Runtime`: `token_store` param (injects OAuth bearer); `run_flow`,
+  `flow_candidates`, `run_scheduled`. `Scheduler`. `MCPConnector.access_token`.
 
 ## What's built (high level)
 
@@ -157,14 +161,17 @@ tiles & connectors from the UI, connect apps by MCP command (with live tool
 introspection), manage brains (cloud/Ollama), per-tile activity, error surfacing,
 rescan. PyPI packaging + CI + release workflow. MIT licensed.
 
-## Roadmap — remaining (the current task builds the first three)
+## Roadmap
 
-1. **Multi-tile orchestration** (`provides`/`consumes`): wire one tile's output
-   to another's input. The `composed` lifecycle state is reserved for this.
-2. **Scheduled / event triggers**: a tile runs on a schedule, not just manual taps.
-3. **Real OAuth**: connector auth beyond env-var passthrough (authorize/callback/
-   token exchange/storage). Hardest to live-test (needs a real provider).
-4. Deferred / non-goals: multi-user · hosting · marketplace.
+Done (this session): ✅ multi-tile orchestration (sequential flows:
+`Runtime.run_flow`, `flow_candidates`, `/api/flows/run`, tile-sheet Chain) · ✅
+scheduled triggers (interval `schedule`, `Scheduler` in the API lifespan,
+`/api/schedules`) · ✅ real OAuth (`auth.oauth`, `tiles_ai/oauth.py` TokenStore +
+flow, `/api/connectors/{id}/oauth/*`, runtime injects the bearer).
+
+Remaining: branching/fan-out flows (only sequential ships) · cron & event
+triggers (only interval ships) · OAuth refresh-token rotation · multi-user /
+hosting / marketplace (deliberate non-goals).
 
 ## Honest gaps
 

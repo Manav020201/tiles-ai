@@ -35,23 +35,45 @@ class ConnectorKind(str, Enum):
     """Hand-written adapter that is neither MCP nor a stock mock."""
 
 
-class AuthConfig(BaseModel):
-    """Auth scheme + scopes for a connector. Mocked in v0.
+class OAuthConfig(BaseModel):
+    """OAuth 2.0 authorization-code config for a connector.
 
-    The real credential flow (OAuth, key vaulting) is out of scope for v0, but
-    this is the declared seam where it plugs in: a real connector reads
-    `scheme`/`scopes` and runs its flow; the mock connector ignores them.
+    Declared in the manifest (URLs, client id, scopes — not secrets). The client
+    secret, if any, is read from `client_secret_env` (a local env var). The board
+    runs the authorize → callback → token-exchange flow and stores the resulting
+    access token locally (never in the manifest).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    authorize_url: str = Field(description="The provider's authorization endpoint.")
+    token_url: str = Field(description="The provider's token endpoint.")
+    client_id: str = Field(description="OAuth client id (public).")
+    client_secret_env: str | None = Field(
+        default=None, description="Env var holding the client secret (local only)."
+    )
+    scopes: list[str] = Field(default_factory=list)
+
+
+class AuthConfig(BaseModel):
+    """Auth scheme + scopes for a connector.
+
+    `env` names host env vars the server needs (passed through / bearer). `oauth`
+    declares an OAuth 2.0 flow the board can run. Secrets never live here.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     scheme: str = Field(
         default="none",
-        description="Auth scheme, e.g. 'none', 'api_key', 'oauth2'. Mocked in v0.",
+        description="Auth scheme, e.g. 'none', 'api_key', 'oauth2'.",
     )
     scopes: list[str] = Field(
         default_factory=list,
         description="Permission scopes the connection requests from the app.",
+    )
+    oauth: OAuthConfig | None = Field(
+        default=None, description="OAuth 2.0 config when scheme is 'oauth2'."
     )
     env: list[str] = Field(
         default_factory=list,

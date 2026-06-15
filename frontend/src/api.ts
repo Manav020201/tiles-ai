@@ -46,6 +46,8 @@ export const api = {
   updateConnector: (id: string, body: Partial<NewConnector>) =>
     http<Connector>("PUT", `/api/connectors/${id}`, body),
   removeConnector: (id: string) => http<{ deleted: string }>("DELETE", `/api/connectors/${id}`),
+  oauthStart: (id: string) => http<{ authorize_url: string }>("GET", `/api/connectors/${id}/oauth/start`),
+  oauthDisconnect: (id: string) => http<Connector>("POST", `/api/connectors/${id}/oauth/disconnect`),
   introspectConnector: (endpoint: string, env: string[]) =>
     http<ConnectorTool[]>("POST", "/api/connectors/introspect", { endpoint, env }),
 
