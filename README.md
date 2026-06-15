@@ -117,9 +117,14 @@ Full guide, including how to connect a new app: **[docs/AUTHORING.md](docs/AUTHO
 
 ## Status
 
-Active development; well-tested with CI on Python 3.11 and 3.12. Coming next:
-branching multi-tile flows, cron/event triggers, OAuth token refresh. Out of
-scope for now: hosting and multi-user.
+Active development; well-tested with CI on Python 3.11 and 3.12.
+
+**Already here:** tiles **chain** (sequential flows), run on an **interval
+schedule**, and connect via **OAuth** (authorization-code) or API keys.
+
+**Refinements still to come:** branching / fan-out flows (only linear chains
+today) · cron and event triggers (only intervals today) · automatic OAuth token
+refresh. Out of scope for now: hosting and multi-user.
 
 ## License
 
