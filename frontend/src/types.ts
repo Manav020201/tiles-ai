@@ -66,3 +66,28 @@ export interface TilesEvent {
   data: Record<string, unknown>;
   ts: number | null;
 }
+
+export interface ConnectorTool {
+  name: string;
+  description: string;
+  side_effect: boolean;
+}
+
+export interface Connector {
+  id: string;
+  app: string;
+  kind: string;
+  tools: ConnectorTool[];
+}
+
+export interface NewTile {
+  name: string;
+  icon?: string;
+  description?: string;
+  instructions?: string;
+  permission_tier?: string;
+  connector?: string | null;
+  allowed_tools?: string[];
+  wants_input?: boolean;
+  input_hint?: string | null;
+}

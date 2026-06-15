@@ -116,3 +116,29 @@ class PinBrainRequest(BaseModel):
 class TestResponse(BaseModel):
     ok: bool
     detail: str = ""
+
+
+class ConnectorToolView(BaseModel):
+    name: str
+    description: str
+    side_effect: bool
+
+
+class ConnectorView(BaseModel):
+    id: str
+    app: str
+    kind: str
+    tools: list[ConnectorToolView]
+
+
+class CreateTileRequest(BaseModel):
+    name: str
+    id: str | None = None  # derived from name if omitted
+    icon: str = "🔲"
+    description: str = "One line shown on the board."
+    instructions: str = "The system prompt / role for this tile's agent."
+    permission_tier: str = "read_only"
+    connector: str | None = None  # omit for an instant tile
+    allowed_tools: list[str] = []
+    wants_input: bool = True
+    input_hint: str | None = None

@@ -1,6 +1,14 @@
 // Thin typed client over the control-plane REST API. Native fetch, no deps.
 
-import type { Approval, Provider, RunResponse, Tile, TileDetail } from "./types";
+import type {
+  Approval,
+  Connector,
+  NewTile,
+  Provider,
+  RunResponse,
+  Tile,
+  TileDetail,
+} from "./types";
 
 async function http<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(path, {
@@ -24,6 +32,8 @@ export class ApiError extends Error {
 export const api = {
   listTiles: () => http<Tile[]>("GET", "/api/tiles"),
   getTile: (id: string) => http<TileDetail>("GET", `/api/tiles/${id}`),
+  listConnectors: () => http<Connector[]>("GET", "/api/connectors"),
+  createTile: (body: NewTile) => http<Tile>("POST", "/api/tiles", body),
   activate: (id: string) => http<Tile>("POST", `/api/tiles/${id}/activate`),
   deactivate: (id: string) => http<Tile>("POST", `/api/tiles/${id}/deactivate`),
   run: (id: string, input: unknown) => http<RunResponse>("POST", `/api/tiles/${id}/run`, { input }),

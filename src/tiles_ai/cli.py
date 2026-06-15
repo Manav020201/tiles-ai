@@ -13,10 +13,8 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
 from . import __version__
-from .contracts.ids import SLUG_PATTERN
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -107,75 +105,22 @@ def _list(args) -> int:
 
 
 def _new(args) -> int:
-    import re
-
-    if not re.match(SLUG_PATTERN, args.id):
-        print(f"error: '{args.id}' is not a valid slug (lowercase, - or _).", file=sys.stderr)
-        return 1
-
-    folder = Path(args.root) / "tiles" / args.id
-    if folder.exists():
-        print(f"error: {folder} already exists.", file=sys.stderr)
-        return 1
-    folder.mkdir(parents=True)
+    from .scaffold import ScaffoldError, scaffold_tile
 
     title = args.id.replace("-", " ").replace("_", " ").title()
-    instant = args.connector is None
-
-    (folder / "manifest.yaml").write_text(
-        _manifest_template(args, title, instant), encoding="utf-8"
-    )
-    (folder / "handler.py").write_text(_handler_template(args, title, instant), encoding="utf-8")
-    (folder / "README.md").write_text(
-        f"# {title}\n\nA Tiles AI tile. Edit `manifest.yaml` and implement `run` in "
-        f"`handler.py`. See docs/AUTHORING.md.\n",
-        encoding="utf-8",
-    )
+    try:
+        scaffold_tile(
+            args.root,
+            id=args.id,
+            name=title,
+            permission_tier=args.tier,
+            connector=args.connector,
+        )
+    except ScaffoldError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     print(f"Created tiles/{args.id}/ — edit manifest.yaml and handler.py, then `tiles list`.")
     return 0
-
-
-def _manifest_template(args, title: str, instant: bool) -> str:
-    lines = [
-        f"id: {args.id}",
-        f"name: {title}",
-        "description: One line shown on the board.",
-        'icon: "🔲"',
-        f"permission_tier: {args.tier}",
-    ]
-    if not instant:
-        lines += [
-            f"connector: {args.connector}",
-            "allowed_tools: []  # subset of the connector's tools",
-        ]
-    lines += [
-        "instructions: >",
-        "  The system prompt / role for this tile's agent.",
-        "consumes:",
-        "  - name: input",
-        "    description: What to type…",
-    ]
-    return "\n".join(lines) + "\n"
-
-
-def _handler_template(args, title: str, instant: bool) -> str:
-    cls = title.replace(" ", "")
-    if instant:
-        return (
-            f'"""{title} — an instant tile (input -> brain -> result)."""\n\n'
-            "from tiles_ai.handlers import PromptTile\n\n\n"
-            f"class {cls}(PromptTile):\n"
-            f'    """Behavior comes from manifest.yaml (instructions)."""\n'
-        )
-    return (
-        f'"""{title} handler."""\n\n'
-        "from tiles_ai.contracts import ActionPlan, Tile\n\n\n"
-        f"class {cls}(Tile):\n"
-        "    async def run(self, input, context) -> ActionPlan:\n"
-        "        # read via ctx.tools (allow-listed); propose side effects via ActionPlan\n"
-        "        answer = await context.model.complete(str(input), system=context.manifest.instructions)\n"
-        "        return ActionPlan(result=answer)\n"
-    )
 
 
 if __name__ == "__main__":

@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Create tiles from the board.** A "＋ New tile" form scaffolds a tile
+  (manifest + handler) from the UI; the registry re-scans and the tile appears
+  live — no restart. Backed by a shared `tiles_ai.scaffold` module (also behind
+  `tiles new`), `Registry.rescan`, and `GET /api/connectors` + `POST /api/tiles`.
 - **Local "smart PC" pack** (zero credentials): the local-files connector gains
   `find_files` + `move_file`, and three tiles — Summarize Folder, Find Files
   (read_only), and Tidy Folder (draft: proposes sorting files into type folders,

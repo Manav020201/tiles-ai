@@ -18,6 +18,14 @@ wiring, stop — you're probably fighting the grain.
 
 ---
 
+## The fastest start: create from the board
+
+Run the board (`tiles up`), click **＋ New tile**, and fill the form — name,
+instructions, permission tier, and (optionally) an app connector + the tools it
+may use. The tile is scaffolded to `tiles/<id>/` and appears on the board
+immediately. Then open `tiles/<id>/handler.py` and edit `run` to go further.
+Everything below is what that form generates, by hand.
+
 ## Part 1 — Write a tile
 
 ### 1. Copy a reference folder

@@ -174,6 +174,94 @@ def test_connector_readiness_reflects_required_env(monkeypatch):
     assert gh2["connector_ready"] is True and gh2["missing_env"] == []
 
 
+def test_list_connectors_endpoint():
+    client, _ = _client()
+    conns = {c["id"]: c for c in client.get("/api/connectors").json()}
+    assert "gmail" in conns and conns["gmail"]["kind"] == "mock"
+    assert any(t["name"] == "send_message" and t["side_effect"] for t in conns["gmail"]["tools"])
+
+
+def _tmp_client(tmp_path):
+    """A board rooted in a temp dir (with one mock connector) so create writes there."""
+    conn = tmp_path / "connectors" / "app"
+    conn.mkdir(parents=True)
+    (conn / "manifest.yaml").write_text(
+        "id: app\napp: App\nkind: mock\ntools:\n"
+        "  - {name: read_thing, description: r, side_effect: false}\n"
+        "  - {name: do_thing, description: d, side_effect: true}\n",
+        encoding="utf-8",
+    )
+    (conn / "adapter.py").write_text(
+        "from tiles_ai.connectors import MockConnector\n\n\nclass A(MockConnector):\n    pass\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "tiles").mkdir()
+    store = BrainStore()
+    store.add_provider(
+        HostedProvider(id="c", provider="anthropic", api_key="k", model="claude-opus-4-8"),
+        make_default=True,
+    )
+    app = create_app(
+        root=tmp_path,
+        brain_store=store,
+        model_adapter=ModelAdapter(store, client_factory=echo_client_factory),
+    )
+    return TestClient(app), tmp_path
+
+
+def test_create_instant_tile_from_board(tmp_path):
+    client, root = _tmp_client(tmp_path)
+    resp = client.post("/api/tiles", json={"name": "My Helper", "instructions": "Help me."})
+    assert resp.status_code == 201
+    body = resp.json()
+    assert body["id"] == "my-helper" and body["connector"] is None
+    # it now shows on the board (registry rescanned) and exists on disk
+    assert "my-helper" in {t["id"] for t in client.get("/api/tiles").json()}
+    assert (root / "tiles" / "my-helper" / "handler.py").is_file()
+
+
+def test_create_connected_tile_from_board(tmp_path):
+    client, _ = _tmp_client(tmp_path)
+    resp = client.post(
+        "/api/tiles",
+        json={
+            "name": "Reader",
+            "connector": "app",
+            "allowed_tools": ["read_thing"],
+            "permission_tier": "read_only",
+        },
+    )
+    assert resp.status_code == 201
+    assert resp.json()["connector"] == "app"
+
+
+def test_create_tile_rejects_readonly_with_side_effect_tool(tmp_path):
+    client, _ = _tmp_client(tmp_path)
+    resp = client.post(
+        "/api/tiles",
+        json={
+            "name": "Bad",
+            "connector": "app",
+            "allowed_tools": ["do_thing"],
+            "permission_tier": "read_only",
+        },
+    )
+    assert resp.status_code == 400
+    assert "side-effect" in resp.json()["detail"].lower()
+
+
+def test_create_tile_rejects_unknown_connector(tmp_path):
+    client, _ = _tmp_client(tmp_path)
+    resp = client.post("/api/tiles", json={"name": "X", "connector": "ghost"})
+    assert resp.status_code == 400
+
+
+def test_create_tile_rejects_duplicate(tmp_path):
+    client, _ = _tmp_client(tmp_path)
+    assert client.post("/api/tiles", json={"name": "Dup"}).status_code == 201
+    assert client.post("/api/tiles", json={"name": "Dup"}).status_code == 400
+
+
 def test_events_endpoint_receives_activation_event():
     # Subscribe to the app's bus directly, then trigger an action over HTTP and
     # confirm the event was published (covers runtime->bus emission end to end

@@ -115,6 +115,19 @@ class Registry:
         registry._load_tiles(root / TILES_DIRNAME)
         return registry
 
+    def rescan(self, root: str | Path) -> Registry:
+        """Re-discover from disk in place, so existing references see new tiles.
+
+        The same Registry object is mutated (not replaced), so closures and the
+        runtime that captured it pick up newly added/edited tiles without rewiring.
+        Active tiles keep running — the runtime tracks those separately.
+        """
+        fresh = Registry.discover(root)
+        self.connectors = fresh.connectors
+        self.tiles = fresh.tiles
+        self.errors = fresh.errors
+        return self
+
     def _load_connectors(self, connectors_dir: Path) -> None:
         for folder in _manifest_folders(connectors_dir):
             name = folder.name

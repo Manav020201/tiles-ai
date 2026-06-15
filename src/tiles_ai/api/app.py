@@ -26,15 +26,21 @@ from ..contracts import (
     HostedProvider,
     LocalProvider,
     ResolvedBrain,
+    TileManifest,
+    validate_tile_against_connector,
 )
 from ..events import Event, EventBus
 from ..model import BrainStore, ModelAdapter
 from ..registry import Registry
 from ..runtime import Runtime, RuntimeError_
+from ..scaffold import ScaffoldError, build_manifest, scaffold_tile, slugify
 from .schemas import (
     AddProviderRequest,
     ApprovalView,
     BrainView,
+    ConnectorToolView,
+    ConnectorView,
+    CreateTileRequest,
     ExecutedView,
     PinBrainRequest,
     ProviderView,
@@ -147,6 +153,60 @@ def create_app(
     @app.get("/api/tiles", response_model=list[TileSummary])
     def list_tiles() -> list[TileSummary]:
         return [_tile_summary(tid) for tid in sorted(registry.tiles)]
+
+    @app.get("/api/connectors", response_model=list[ConnectorView])
+    def list_connectors() -> list[ConnectorView]:
+        # Lets the board's "create tile" form offer a connector + its tools.
+        views = []
+        for cid in sorted(registry.connectors):
+            m = registry.connectors[cid].manifest
+            views.append(
+                ConnectorView(
+                    id=m.id,
+                    app=m.app,
+                    kind=m.kind.value,
+                    tools=[
+                        ConnectorToolView(
+                            name=t.name, description=t.description, side_effect=t.side_effect
+                        )
+                        for t in m.tools
+                    ],
+                )
+            )
+        return views
+
+    @app.post("/api/tiles", response_model=TileSummary, status_code=201)
+    def create_tile(body: CreateTileRequest) -> TileSummary:
+        tile_id = body.id or slugify(body.name)
+        fields = dict(
+            id=tile_id,
+            name=body.name,
+            icon=body.icon,
+            description=body.description,
+            instructions=body.instructions,
+            permission_tier=body.permission_tier,
+            connector=body.connector,
+            allowed_tools=body.allowed_tools,
+            wants_input=body.wants_input,
+            input_hint=body.input_hint,
+        )
+        try:
+            manifest_dict = build_manifest(**fields)  # schema validation
+            if body.connector:
+                lc = registry.get_connector(body.connector)
+                if lc is None:
+                    raise ScaffoldError(f"no connector '{body.connector}'")
+                errors = validate_tile_against_connector(
+                    TileManifest.model_validate(manifest_dict), lc.manifest
+                )
+                if errors:
+                    raise ScaffoldError("; ".join(errors))
+            scaffold_tile(root, **fields)
+        except ScaffoldError as exc:
+            raise HTTPException(400, str(exc)) from exc
+
+        registry.rescan(root)  # the new tile now shows on the board
+        return _tile_summary(tile_id)
 
     @app.get("/api/tiles/{tile_id}", response_model=TileDetail)
     def get_tile(tile_id: str) -> TileDetail:

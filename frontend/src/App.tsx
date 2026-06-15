@@ -6,6 +6,7 @@ import { TileIcon } from "./components/TileIcon";
 import { TileSheet } from "./components/TileSheet";
 import { Approvals } from "./components/Approvals";
 import { ActivityFeed } from "./components/ActivityFeed";
+import { NewTileForm } from "./components/NewTileForm";
 import { groupTiles } from "./lib/grouping";
 
 export function App() {
@@ -14,6 +15,7 @@ export function App() {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [events, setEvents] = useState<TilesEvent[]>([]);
   const [openTileId, setOpenTileId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const refresh = useCallback(async () => {
     const [t, a, p] = await Promise.all([
@@ -110,6 +112,22 @@ export function App() {
               </div>
             </div>
           ))}
+
+          <div className="board-group">
+            <h2 className="group-title">Create</h2>
+            <div className="board">
+              <div className="app-cell">
+                <button
+                  className="app-icon add-icon"
+                  onClick={() => setCreating(true)}
+                  title="Create a new tile"
+                >
+                  ＋
+                </button>
+                <span className="app-label">New tile</span>
+              </div>
+            </div>
+          </div>
         </section>
 
         <aside className="sidebar">
@@ -125,6 +143,10 @@ export function App() {
           onClose={() => setOpenTileId(null)}
           onChanged={refresh}
         />
+      )}
+
+      {creating && (
+        <NewTileForm onClose={() => setCreating(false)} onCreated={refresh} />
       )}
     </div>
   );

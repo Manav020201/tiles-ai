@@ -126,6 +126,10 @@ class MyTile(Tile):
         return ActionPlan(result=answer)                     # propose side effects, don't do them
 ```
 
+…or skip the editor entirely: click **＋ New tile** on the board, fill a short
+form, and it's scaffolded and live instantly — then open the generated
+`handler.py` to go deeper.
+
 Full walkthrough — including adding a connector — in
 [docs/AUTHORING.md](docs/AUTHORING.md). The two reference tiles
 ([inbox-summary](tiles/inbox-summary), [reply-drafter](tiles/reply-drafter)) are

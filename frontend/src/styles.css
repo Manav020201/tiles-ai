@@ -188,6 +188,39 @@ button { font-family: inherit; }
     inset 0 -10px 18px -10px rgba(48, 209, 88, 0.25);
 }
 
+.add-icon {
+  background: none;
+  border: 2px dashed var(--hairline-strong);
+  box-shadow: none;
+  color: var(--text-2);
+  font-size: 1.8rem;
+  font-weight: 300;
+}
+.add-icon::after,
+.add-icon::before { content: none; }
+.add-icon:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  transform: translateY(-2px);
+  box-shadow: none;
+}
+
+/* new-tile form */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.8rem; }
+.field-narrow { max-width: 90px; }
+.field textarea.sheet-input { margin-bottom: 0; }
+.tool-list {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  background: var(--fill-2); border-radius: 12px; padding: 0.6rem 0.8rem;
+}
+.tool-check {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.9rem; cursor: pointer; padding: 0.25rem 0;
+}
+.tool-check input { width: 16px; height: 16px; accent-color: var(--blue); }
+.tool-check .pill { margin-left: 0.4rem; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.2rem; }
+
 .run-dot {
   position: absolute;
   top: -5px; right: -5px;
