@@ -120,6 +120,65 @@ class MyTile(Tile):
 
 Full guide, including how to connect a new app: **[docs/AUTHORING.md](docs/AUTHORING.md)**.
 
+## Troubleshooting
+
+<details>
+<summary><strong>The board is empty, or <code>http://127.0.0.1:8000</code> shows <code>404 Not Found</code></strong></summary>
+
+You're almost certainly running a **source checkout** or an **editable install**
+(`pip install -e`) instead of the published package. The board UI and the starter
+tiles are built into the *wheel*; a source tree only has them after a release
+build, so it serves nothing at `/` and shows no tiles.
+
+The fix is to install the real package into an **isolated environment** so nothing
+shadows it (see the next item). If you *do* want a checkout to serve the board:
+
+```bash
+npm --prefix frontend run build && cp -r frontend/dist src/tiles_ai/web
+python scripts/bundle_starter.py        # adds the seedable starter board
+```
+</details>
+
+<details>
+<summary><strong><code>pip install tiles-ai</code> says "Requirement already satisfied" / won't update</strong></summary>
+
+A pre-existing install — often an editable one from a clone — is registered, so
+`import tiles_ai` resolves to *that*, not the download. Install into a fresh
+virtual environment instead (non-destructive; leaves any dev checkout intact):
+
+```bash
+python3 -m venv ~/tiles-test-env
+~/tiles-test-env/bin/pip install --upgrade pip tiles-ai
+mkdir -p ~/tiles-demo && cd ~/tiles-demo
+~/tiles-test-env/bin/tiles up --echo
+```
+
+Or, to use your base environment, remove the old install first:
+`pip uninstall tiles-ai` then `pip install tiles-ai` (re-run
+`pip install -e ".[dev]"` in your clone afterwards if you were developing).
+</details>
+
+<details>
+<summary><strong><code>pipx install tiles-ai</code> fails with an <code>ensurepip</code> / venv error</strong></summary>
+
+This is a pipx + Python toolchain problem (commonly a freshly-installed Python
+whose `ensurepip` is broken), not a Tiles problem — pipx never reaches the
+package. Either point pipx at a known-good Python:
+
+```bash
+PIPX_DEFAULT_PYTHON=$(which python3) pipx install tiles-ai
+```
+
+or skip pipx and use the plain `venv + pip` recipe in the item above.
+</details>
+
+<details>
+<summary><strong>I have an old version installed</strong></summary>
+
+Check with `tiles --version` and `pip show tiles-ai`. Upgrade with
+`pip install --upgrade tiles-ai` (inside the right environment — see above).
+</details>
+
 ## Docs
 
 - **[SPEC.md](SPEC.md)** — the design and the tile contract
