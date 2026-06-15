@@ -55,6 +55,24 @@ def test_connector_lists_and_reads(tmp_path):
     assert read.side_effect is False  # manifest is the authority
 
 
+def test_reads_a_file_larger_than_64kb(tmp_path):
+    # Regression: a JSON-RPC response over asyncio's default 64 KB readline limit
+    # used to crash the stdio client (LimitOverrunError). A big file must read fine.
+    big = "x" * 90_000  # > 64 KB; the server caps reads at 100 KB
+    (tmp_path / "big.txt").write_text(big, encoding="utf-8")
+
+    async def go():
+        c = MCPConnector.from_manifest(_manifest(tmp_path))
+        await c.connect(AuthConfig())
+        try:
+            return await c.call_tool("read_file", {"path": "big.txt"}, _ctx())
+        finally:
+            await c.disconnect()
+
+    read = asyncio.run(go())
+    assert read.ok and len(read.output) >= 64_000
+
+
 def _full_manifest(root: Path) -> ConnectorManifest:
     return ConnectorManifest.model_validate(
         {

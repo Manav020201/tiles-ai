@@ -58,6 +58,15 @@ All notable changes to this project are documented here. The format follows
   each move queued for your approval). The first *local* side-effect flow, tested
   end to end (propose → approve → files move on disk).
 
+## [0.1.7] - 2026-06-15
+
+### Fixed
+- **Reading a file larger than 64 KB no longer crashes the MCP connector.** The
+  stdio JSON-RPC client used `asyncio`'s default 64 KB line limit, so a tool
+  result bigger than that (e.g. Summarize Folder / Ask My Files over a folder with
+  a large file) raised `LimitOverrunError` → HTTP 500. The reader now allows lines
+  up to 32 MB and, beyond that, returns a clear error instead of crashing.
+
 ## [0.1.6] - 2026-06-15
 
 ### Added

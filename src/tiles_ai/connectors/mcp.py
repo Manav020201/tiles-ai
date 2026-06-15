@@ -49,6 +49,7 @@ from ..contracts import (
 
 PROTOCOL_VERSION = "2024-11-05"
 _READ_TIMEOUT = 30.0  # seconds to wait for a single JSON-RPC response
+_STDIO_LINE_LIMIT = 32 * 1024 * 1024  # 32 MB cap for one JSON-RPC line (large tool results)
 
 
 class MCPError(Exception):
@@ -79,6 +80,10 @@ class StdioMCPClient:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=self._cwd,
+            # A JSON-RPC response is one newline-delimited line; reading a large
+            # file makes it big. Raise asyncio's default 64 KB line cap so the
+            # reader doesn't overflow on legitimately large tool results.
+            limit=_STDIO_LINE_LIMIT,
         )
         # Drain stderr in the background so a chatty server can't deadlock on a
         # full pipe; keep the last few lines for error messages.
@@ -148,6 +153,14 @@ class StdioMCPClient:
             except TimeoutError as exc:
                 raise MCPError(
                     f"timed out waiting for response to '{method}'" + self._stderr_hint()
+                ) from exc
+            except ValueError as exc:
+                # readline overflow: a single response line exceeded the buffer
+                # limit (e.g. reading a huge file). Fail clearly, don't crash.
+                raise MCPError(
+                    f"response to '{method}' was too large to read "
+                    f"(over {_STDIO_LINE_LIMIT // (1024 * 1024)} MB) — the tool likely "
+                    "returned a very large file"
                 ) from exc
             if not raw:
                 raise MCPError(
