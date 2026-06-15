@@ -31,6 +31,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Bundle the starter board
+        run: python scripts/bundle_starter.py
       - name: Build sdist + wheel
         run: |
           pip install build

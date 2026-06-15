@@ -58,6 +58,20 @@ All notable changes to this project are documented here. The format follows
   each move queued for your approval). The first *local* side-effect flow, tested
   end to end (propose → approve → files move on disk).
 
+## [0.1.1] - 2026-06-15
+
+### Fixed
+- **First run no longer shows an empty board.** A fresh `pip install tiles-ai`
+  followed by `tiles up` in an empty directory previously discovered zero tiles
+  (the starter `tiles/`/`connectors/` were not bundled). The package now ships a
+  **starter board** (`tiles_ai/starter_board/`, generated at release-build time
+  by `scripts/bundle_starter.py`).
+
+### Added
+- **`tiles init`** seeds the starter board into the current folder (`--root`,
+  `--force`). `tiles up` auto-seeds when it finds no board, so the very first
+  command always opens a populated, editable board.
+
 ## [0.1.0] - 2026-06-14
 
 First public release.

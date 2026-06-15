@@ -31,12 +31,14 @@ You'll need **Python 3.11+**. The board ships pre-built in the package:
 
 ```bash
 pipx install tiles-ai      # or: pip install tiles-ai
-tiles up --echo
+tiles up --echo            # seeds a starter board here on first run
 ```
 
 Open **http://127.0.0.1:8000** — you'll see a starter board running on a free
-offline brain (no API key needed). When you're ready for a real model, run
-`tiles up` and connect a brain from the screen.
+offline brain (no API key needed). The first run drops the starter tiles and
+connectors into the current folder (so you can edit them); run `tiles init`
+yourself to seed a board without starting the server. When you're ready for a
+real model, run `tiles up` and connect a brain from the screen.
 
 <details>
 <summary>From source (to hack on Tiles itself)</summary>

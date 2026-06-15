@@ -1,5 +1,6 @@
 """The `tiles` command-line interface.
 
+    tiles init               seed a starter board into the current folder
     tiles up                 run the API + board (http://127.0.0.1:8000)
     tiles up --echo          run with an offline demo brain (no keys)
     tiles list               show discovered connectors and tiles
@@ -23,6 +24,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--version", action="version", version=f"tiles-ai {__version__}")
     sub = parser.add_subparsers(dest="command")
+
+    init = sub.add_parser("init", help="Seed a starter board into a folder.")
+    init.add_argument("--root", default=".", help="Where to create the board.")
+    init.add_argument("--force", action="store_true", help="Overwrite an existing board.")
+    init.set_defaults(func=_init)
 
     up = sub.add_parser("up", help="Run the API and board.")
     up.add_argument("--root", default=".", help="Board root holding connectors/ and tiles/.")
@@ -55,10 +61,41 @@ def main(argv: list[str] | None = None) -> int:
     return args.func(args) or 0
 
 
+def _init(args) -> int:
+    from .bootstrap import BoardExistsError, init_board
+
+    try:
+        created = init_board(args.root, force=args.force)
+    except BoardExistsError as exc:
+        print(f"error: {exc} — use --force to overwrite.", file=sys.stderr)
+        return 1
+    except FileNotFoundError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    where = "the current folder" if args.root == "." else args.root
+    print(f"Seeded a starter board into {where} ({', '.join(created)}).")
+    print("Next: run `tiles up --echo`, then open http://127.0.0.1:8000")
+    return 0
+
+
+def _seed_if_empty(root: str) -> None:
+    """First-run convenience: if there's no board here and the package ships a
+    bundled one, copy it in so `tiles up` never opens an empty board."""
+    from .bootstrap import bundled_board, has_board, init_board
+
+    if has_board(root) or bundled_board() is None:
+        return
+    created = init_board(root)
+    where = "the current folder" if root == "." else root
+    print(f"No board found — seeded a starter board into {where} ({', '.join(created)}).")
+
+
 def _up(args) -> int:
     import os
 
     import uvicorn
+
+    _seed_if_empty(args.root)
 
     print(f"Tiles AI on http://{args.host}:{args.port}")
     if args.echo:

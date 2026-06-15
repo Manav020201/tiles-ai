@@ -32,17 +32,22 @@ The [release workflow](.github/workflows/release.yml) then:
 - builds the React board (`frontend/`) and copies `frontend/dist` into
   `src/tiles_ai/web/` so the board ships **inside the wheel** (this dir is
   gitignored — it only exists during the release build),
+- bundles the **starter board** (`connectors/`, `tiles/`, `examples/`,
+  `sample_docs/`) into `src/tiles_ai/starter_board/` via
+  `scripts/bundle_starter.py`, so `tiles init` / `tiles up` can seed it for users
+  who installed from PyPI (also gitignored, generated at build time),
 - builds the sdist + wheel,
 - publishes to PyPI via Trusted Publishing.
 
-After release, `pipx install tiles-ai && tiles up` serves the API and the bundled
-board on one port.
+After release, `pipx install tiles-ai && tiles up` seeds a starter board into the
+current folder, then serves the API and the bundled board on one port.
 
 ## Verify a build locally
 
 ```bash
 npm --prefix frontend run build
 cp -r frontend/dist src/tiles_ai/web
-python -m build         # produces dist/*.whl with the board bundled
-rm -rf src/tiles_ai/web
+python scripts/bundle_starter.py    # -> src/tiles_ai/starter_board/
+python -m build                     # produces dist/*.whl with both bundled
+rm -rf src/tiles_ai/web src/tiles_ai/starter_board
 ```

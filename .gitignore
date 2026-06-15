@@ -24,6 +24,7 @@ frontend/dist/
 
 # Board bundled into the package at release time (generated, not committed)
 src/tiles_ai/web/
+src/tiles_ai/starter_board/
 
 # OS
 .DS_Store

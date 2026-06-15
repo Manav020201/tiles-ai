@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tiles-ai"
-version = "0.1.0"
+version = "0.1.1"
 description = "Tiles AI — a phone-home-screen control plane for AI agents. Register, activate, observe, and permission tiles."
 readme = "README.md"
 license = { text = "MIT" }
@@ -63,9 +63,10 @@ ignore = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-# py.typed ships type info (PEP 561). web/** is the built board, bundled into the
-# wheel by the release build (see RELEASING.md).
-tiles_ai = ["py.typed", "web/**/*"]
+# py.typed ships type info (PEP 561). web/** is the built board and
+# starter_board/** is the seedable starter board — both generated and bundled
+# into the wheel by the release build (see RELEASING.md).
+tiles_ai = ["py.typed", "web/**/*", "starter_board/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
