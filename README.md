@@ -3,6 +3,7 @@
 **A home screen for your AI agents.** Lay your agents out as tiles on a board,
 tap one to run it, and stay in control of anything it does.
 
+[![PyPI](https://img.shields.io/pypi/v/tiles-ai.svg)](https://pypi.org/project/tiles-ai/)
 [![CI](https://github.com/Manav020201/tiles-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Manav020201/tiles-ai/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 

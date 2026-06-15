@@ -28,3 +28,6 @@ src/tiles_ai/web/
 # OS
 .DS_Store
 .claude/settings.local.json
+
+# Local handoff notes (not published)
+HANDOFF.md
